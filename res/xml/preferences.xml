@@ -9,7 +9,7 @@
                 android:title="@string/title_server_preference"
                 android:summary="@string/summary_server_preference"
                 android:dialogTitle="@string/dialog_server_preference" />
-        <EditTextPreference
+        <Preference android:summary="@string/summary_infos_preferences" android:title="@string/title_infos_preferences"></Preference><EditTextPreference
                 android:key="server_username_preference"
                 android:title="@string/title_username_preference"
                 android:summary="@string/summary_username_preference"
@@ -20,7 +20,11 @@
                 android:summary="@string/summary_password_preference"
                 android:dialogTitle="@string/dialog_password_preference"
                 android:password="true" />
-    </PreferenceCategory>
+    
+
+
+
+</PreferenceCategory>
 
 
 </PreferenceScreen>

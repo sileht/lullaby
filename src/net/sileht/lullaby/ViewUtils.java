@@ -86,6 +86,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 
 	@Override
 	public void onItemClick(AdapterView<?> l, View v, int position, long id) {
+		
 		Cursor cursor = (Cursor) l.getItemAtPosition(position);
 		if (cursor.getColumnName(1) == ARTIST_NAME) {
 

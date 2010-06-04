@@ -24,8 +24,12 @@ import net.sileht.lullaby.backend.Player;
 import net.sileht.lullaby.objects.Song;
 
 import android.app.ListActivity;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -37,6 +41,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class PlayingPlaylistActivity extends ListActivity implements
 		View.OnCreateContextMenuListener {
@@ -44,11 +49,28 @@ public class PlayingPlaylistActivity extends ListActivity implements
 	private PlayingPlaylistAdapter mAdapter;
 	private ListView mView;
 
-	//private static final String TAG = "DroidZikPlayingPlaylist";
+	// Bind Service Player
+	private Player mPlayer;
+	private ServiceConnection mPlayerConnection = new ServiceConnection() {
+		
+		@Override
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			mPlayer = ((Player.PlayerBinder)service).getService();
+	    }
 
+		@Override
+		public void onServiceDisconnected(ComponentName className) {
+			mPlayer = null;
+	    }
+	};
+	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+
+	    bindService(new Intent(PlayingPlaylistActivity.this, 
+	            Player.class), mPlayerConnection, Context.BIND_AUTO_CREATE);
+	    
 		setContentView(R.layout.playing_playlist_activity);
 
 		if (mAdapter == null) {
@@ -56,7 +78,7 @@ public class PlayingPlaylistActivity extends ListActivity implements
 		}
 		setListAdapter(mAdapter);
 
-		Lullaby.pl.setAdapter(mAdapter);
+		mPlayer.mPlaylist.setAdapter(mAdapter);
 
 		mView = getListView();
 		mView.setOnCreateContextMenuListener(this);
@@ -64,11 +86,11 @@ public class PlayingPlaylistActivity extends ListActivity implements
 		((TouchInterceptor) mView)
 				.setDropListener(new TouchInterceptor.DropListener() {
 					public void drop(int from, int to) {
-						Lullaby.pl.move(from, to);
+						mPlayer.mPlaylist.move(from, to);
 					}
 				});
 
-		Lullaby.mp.setPlayerListener(new MyPlayerListener());
+		mPlayer.setPlayerListener(new MyPlayerListener());
 	}
 
 	private final static int MENU_PLAY_SELECTION = 0;
@@ -88,10 +110,10 @@ public class PlayingPlaylistActivity extends ListActivity implements
 
 		switch (item.getItemId()) {
 		case MENU_PLAY_SELECTION:
-			Lullaby.pl.play(menuinfo.position);
+			mPlayer.mPlaylist.play(menuinfo.position);
 			return true;
 		case MENU_DELETE_ITEM:
-			Lullaby.pl.remove(menuinfo.position);
+			mPlayer.mPlaylist.remove(menuinfo.position);
 			return true;
 		}
 		return super.onContextItemSelected(item);
@@ -100,16 +122,17 @@ public class PlayingPlaylistActivity extends ListActivity implements
 
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
-		Lullaby.pl.play(position);
+		mPlayer.mPlaylist.play(position);
 	}
 
 	static class PlayingPlaylistAdapter extends BaseAdapter {
 		private int mResource;
 		private LayoutInflater mInflater;
+		private PlayingPlaylistActivity mContext;
 
-		public PlayingPlaylistAdapter(Context context) {
+		public PlayingPlaylistAdapter(PlayingPlaylistActivity context) {
 			super();
-
+			mContext = context;
 			mResource = R.layout.edit_track_list_item;
 			mInflater = (LayoutInflater) context
 					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -120,7 +143,7 @@ public class PlayingPlaylistActivity extends ListActivity implements
 		public View getView(int position, View convertView, ViewGroup parent) {
 			View v = mInflater.inflate(mResource, parent, false);
 
-			Song s = Lullaby.pl.get(position);
+			Song s = mContext.mPlayer.mPlaylist.get(position);
 
 			ImageView iv = (ImageView) v.findViewById(R.id.icon);
 			iv.setVisibility(View.VISIBLE);
@@ -136,7 +159,7 @@ public class PlayingPlaylistActivity extends ListActivity implements
 			line2.setText(s.album + " - " + s.artist);
 			duration.setText(Utils.stringForTime(s.time));
 
-			if ((Lullaby.pl.getCurrentPosition() == position)) {
+			if ((mContext.mPlayer.mPlaylist.getCurrentPosition() == position)) {
 				play_indicator
 						.setImageResource(R.drawable.indicator_ic_mp_playing_list);
 				play_indicator.setVisibility(View.VISIBLE);
@@ -148,12 +171,12 @@ public class PlayingPlaylistActivity extends ListActivity implements
 
 		@Override
 		public int getCount() {
-			return Lullaby.pl.size();
+			return mContext.mPlayer.mPlaylist.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
-			return Lullaby.pl.get(position);
+			return mContext.mPlayer.mPlaylist.get(position);
 		}
 
 		@Override
@@ -171,7 +194,7 @@ public class PlayingPlaylistActivity extends ListActivity implements
 
 		@Override
 		public void onNewSongPlaying(Song song) {
-			int position = Lullaby.pl.getCurrentPosition();
+			int position = mPlayer.mPlaylist.getCurrentPosition();
 			mView.setSelectionFromTop(position,0);			
 		}
 

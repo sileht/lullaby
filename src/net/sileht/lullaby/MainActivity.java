@@ -25,11 +25,17 @@ import net.sileht.lullaby.backend.Player;
 import net.sileht.lullaby.objects.Song;
 
 import android.app.ActivityGroup;
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -78,11 +84,35 @@ public class MainActivity extends ActivityGroup {
 	private boolean isConnectionToAmpacheFailed = false;
 
 	private boolean hasAlreadyCheckConfigured = false;
+	
+	// Bind Service Player
+	private Player mPlayer;
+	private ServiceConnection mPlayerConnection = new ServiceConnection() {
+		
+		@Override
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			mPlayer = ((Player.PlayerBinder)service).getService();
+	        Toast.makeText(MainActivity.this, "Connected to player",
+	                Toast.LENGTH_SHORT).show();
+	    }
+
+		@Override
+		public void onServiceDisconnected(ComponentName className) {
+			mPlayer = null;
+	        Toast.makeText(MainActivity.this,"Disconnected to player",
+	                Toast.LENGTH_SHORT).show();
+	    }
+	};
+
+	
 	private static final String TAG = "DroidZikMainActivity";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+	    bindService(new Intent(MainActivity.this, 
+	            Player.class), mPlayerConnection, Context.BIND_AUTO_CREATE);
 
 
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -167,21 +197,21 @@ public class MainActivity extends ActivityGroup {
 		playpause.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Lullaby.mp.doPauseResume();
+				mPlayer.doPauseResume();
 			}
 		});
 		next = (ImageButton) findViewById(R.id.next);
 		next.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Lullaby.pl.playNext();
+				mPlayer.mPlaylist.playNext();
 			}
 		});
 		previous = (ImageButton) findViewById(R.id.previous);
 		previous.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Lullaby.pl.playPrevious();
+				mPlayer.mPlaylist.playPrevious();
 			}
 		});
 
@@ -197,11 +227,11 @@ public class MainActivity extends ActivityGroup {
 		mProgress.setSecondaryProgress(0);
 		mProgress.setOnSeekBarChangeListener(new MySeekBarListener());
 		
-		Lullaby.mp.setPlayerListener(new MyPlayerListener());
+		mPlayer.setPlayerListener(new MyPlayerListener());
 
 		(new AsyncUIUpdate()).start();
 
-		Lullaby.pl.load(this);
+		mPlayer.mPlaylist.load(this);
 	}
 
 	private void checkConnection() {
@@ -237,22 +267,32 @@ public class MainActivity extends ActivityGroup {
 		isConnectedToAmpache = isConnectedToAmpacheTest;
 	}
 
+	protected void onPause(){
+		super.onPause();
+	}
+	
 	@Override
 	protected void onStop() {
-		Lullaby.pl.save(this);
+		mPlayer.mPlaylist.save(this);
 		super.onStop();
+	}
+
+	@Override
+	protected void onDestroy() {
+	    super.onDestroy();
+	    unbindService(mPlayerConnection);
 	}
 
 	private void setProgress() {
 		if (isCurrentlySeek) {
 			return;
 		}
-		int position = Lullaby.mp.getCurrentPosition();
-		int duration = Lullaby.mp.getDuration();
+		int position = mPlayer.getCurrentPosition();
+		int duration = mPlayer.getDuration();
 		if (duration > 0) {
 			long pos = 1000L * position / duration;
 			mProgress.setProgress((int) pos);
-			int percent = Lullaby.mp.getBuffer();
+			int percent = mPlayer.getBuffer();
 			mProgress.setSecondaryProgress(percent * 10);
 			mTimeView.setText(Utils.stringForTime(position));
 			mDurationView.setText(Utils.stringForTime(duration));
@@ -314,8 +354,8 @@ public class MainActivity extends ActivityGroup {
 		Intent intent = null;
 		switch (item.getItemId()) {
 		case MENU_REPEAT:
-			Lullaby.pl.toggleRepeat();
-			if (Lullaby.pl.isRepeat()){
+			mPlayer.mPlaylist.toggleRepeat();
+			if (mPlayer.mPlaylist.isRepeat()){
 				item.setIcon(
 						R.drawable.ic_mp_repeat_all_btn);
 			} else {
@@ -324,19 +364,19 @@ public class MainActivity extends ActivityGroup {
 			}
 			break;
 		case MENU_SHUFFLE:
-			Lullaby.pl.shuffle();
+			mPlayer.mPlaylist.shuffle();
 			break;
 		case MENU_SETTINGS:
 			intent = new Intent().setClass(this, SettingActivity.class);
 			break;
 		case MENU_CLEAR:
-			Lullaby.pl.clear();
+			mPlayer.mPlaylist.clear();
 			break;
 		case MENU_SAVE:
-			Lullaby.pl.save(this);
+			mPlayer.mPlaylist.save(this);
 			break;
 		case MENU_LOAD:
-			Lullaby.pl.load(this);
+			mPlayer.mPlaylist.load(this);
 			break;
 		case MENU_EXIT:
 			finish();
@@ -450,11 +490,11 @@ public class MainActivity extends ActivityGroup {
 		@Override
 		public void onProgressChanged(SeekBar seekbar, int progress,
 				boolean fromUser) {
-			if (fromUser && Lullaby.mp.isSeekable()) {
-				int duration = Lullaby.mp.getDuration();
+			if (fromUser && mPlayer.isSeekable()) {
+				int duration = mPlayer.getDuration();
 				int seek = (int) (progress * duration / 1000L);
 				Log.d(TAG, "Seeking to " + Utils.stringForTime(seek));
-				Lullaby.mp.seekTo(seek);
+				mPlayer.seekTo(seek);
 			}
 		}
 	}
@@ -486,13 +526,13 @@ public class MainActivity extends ActivityGroup {
 						&& Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
 					Toast.makeText(MainActivity.this, "Playing previous song",
 							Toast.LENGTH_SHORT).show();
-					Lullaby.pl.playPrevious();
+					mPlayer.mPlaylist.playPrevious();
 					return true;
 				} else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE
 						&& Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
 					Toast.makeText(MainActivity.this, "Playing next song",
 							Toast.LENGTH_SHORT).show();
-					Lullaby.pl.playNext();
+					mPlayer.mPlaylist.playNext();
 					return true;
 				}
 			} catch (Exception e) {

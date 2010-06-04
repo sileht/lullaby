@@ -24,16 +24,26 @@ package net.sileht.lullaby.backend;
 import java.util.ArrayList;
 
 import net.sileht.lullaby.Lullaby;
+import net.sileht.lullaby.MainActivity;
+import net.sileht.lullaby.R;
 import net.sileht.lullaby.objects.Song;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Binder;
+import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 
-public class Player {
+public class Player extends Service{
 
 	private MediaPlayer mPlayer;
 
@@ -49,12 +59,16 @@ public class Player {
 
 	private STATE mState;
 
-	private Context mContext;
-
 	private MyPhoneStateListener mPhoneStateListener;
 	private MyMediaPlayerListener mMediaPlayerListener;
 
 	private ArrayList<PlayerListener> mPlayerListeners;
+
+	public PlayingPlaylist mPlaylist;
+	
+    private NotificationManager mNM;
+    private Notification mNotification;
+
 
 	public static abstract class PlayerListener {
 		abstract public void onTogglePlaying(boolean playing);
@@ -65,10 +79,22 @@ public class Player {
 		abstract public void onPlayerStopped();
 	}
 
-	public Player(Context context) {
+    /**
+     * Class for clients to access.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with
+     * IPC.
+     */
+    public class PlayerBinder extends Binder {
+    	public Player getService() {
+            return Player.this;
+        }
+    }
 
-		mContext = context;
-
+    @Override
+    public void onCreate() {
+		
+    	mPlaylist = new PlayingPlaylist(this);
+    	
 		mPhoneStateListener = new MyPhoneStateListener();
 
 		mPlayerListeners = new ArrayList<PlayerListener>();
@@ -82,9 +108,59 @@ public class Player {
 		mPlayer.setOnCompletionListener(mMediaPlayerListener);
 		mPlayer.setOnBufferingUpdateListener(mMediaPlayerListener);
 
+		
 		setState(STATE.Idle);
+		
+		showNotification();
+		
+        Toast.makeText(this, "Lullaby Player Service Start", Toast.LENGTH_SHORT).show();
 	}
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // We want this service to continue running until it is explicitly
+        // stopped, so return sticky.
+        return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        // Cancel the persistent notification.
+        mNM.cancel(1);
+
+        Toast.makeText(this, "Lullaby Player Service Stopped", Toast.LENGTH_SHORT).show();
+        
+
+		Context ctx = getApplicationContext();
+		TelephonyManager tmgr = (TelephonyManager) ctx
+				.getSystemService(Context.TELEPHONY_SERVICE);
+		tmgr.listen(mPhoneStateListener, 0);
+		
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
+    }
+    // This is the object that receives interactions from clients.  See
+    // RemoteService for a more complete example.
+    private final IBinder mBinder = new PlayerBinder();
+
+
+	
+	public void showNotification(){
+		mNotification = new Notification(R.drawable.icon, this.getString(R.string.app_name), System.currentTimeMillis());
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		updateNotification("Nop", "Nop");
+		mNotificationManager.notify(1, mNotification);
+		
+	}
+
+	public void updateNotification(CharSequence title, CharSequence text){
+		Intent notificationIntent = new Intent(this, MainActivity.class);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+		mNotification.setLatestEventInfo(this, title, text, contentIntent);
+	}
 	private void setState(STATE state) {
 		mState = state;
 
@@ -217,12 +293,6 @@ public class Player {
 		return 0;
 	}
 
-	public void quit() {
-		TelephonyManager tmgr = (TelephonyManager) mContext
-				.getSystemService(Context.TELEPHONY_SERVICE);
-		tmgr.listen(mPhoneStateListener, 0);
-	}
-
 	public void setPlayerListener(PlayerListener StatusChangeObject) {
 		mPlayerListeners.add(StatusChangeObject);
 	}
@@ -253,7 +323,7 @@ public class Player {
 			setState(STATE.Stopped);
 
 			Log.v(TAG, "Completion");
-			Song song = Lullaby.pl.playNext();
+			Song song = mPlaylist.playNext();
 			if (song == null) {
 				for (PlayerListener obj : mPlayerListeners) {
 					obj.onPlayerStopped();
@@ -276,8 +346,9 @@ public class Player {
 
 		@Override
 		public void onCallStateChanged(int state, String incomingNumber) {
+			Context ctx = getApplicationContext();
 			if (state == TelephonyManager.CALL_STATE_RINGING) {
-				AudioManager audioManager = (AudioManager) mContext
+				AudioManager audioManager = (AudioManager) ctx
 						.getSystemService(Context.AUDIO_SERVICE);
 				int ringvolume = audioManager
 						.getStreamVolume(AudioManager.STREAM_RING);
@@ -299,5 +370,5 @@ public class Player {
 				}
 			}
 		}
-	};
+	}
 }

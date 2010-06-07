@@ -41,7 +41,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class PlayingPlaylistActivity extends ListActivity implements
 		View.OnCreateContextMenuListener {

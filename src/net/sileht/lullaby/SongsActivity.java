@@ -57,6 +57,7 @@ public class SongsActivity extends Activity {
 	}
 
 	private AmpacheRequest request;
+	ViewUtils mViewUtils;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -83,9 +84,10 @@ public class SongsActivity extends Activity {
 		setContentView(R.layout.list_classic);
 
 		ListView lv = (ListView) findViewById(R.id.list);
-		ViewUtils e = new ViewUtils(this);
-		lv.setOnItemClickListener(e);
-		lv.setOnItemLongClickListener(e);
+		
+		mViewUtils = new ViewUtils(this);
+		lv.setOnItemClickListener(mViewUtils);
+		lv.setOnItemLongClickListener(mViewUtils);
 
 		if (songsData == null) {
 			// Tell them we're loading
@@ -115,11 +117,13 @@ public class SongsActivity extends Activity {
 		lv.setAdapter(mAdapter);
 	}
 
-	@Override
-	protected void onDestroy() {
+
+	protected void onStop(){
 		request.stop();
-		super.onDestroy();
+		mViewUtils.onStop();
+		super.onStop();
 	}
+	
 
 	private SimpleCursorAdapter getNewAdapter() {
 		int r;

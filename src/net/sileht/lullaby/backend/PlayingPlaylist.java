@@ -26,7 +26,6 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import net.sileht.lullaby.Lullaby;
 import net.sileht.lullaby.AmpacheRequest;
 import net.sileht.lullaby.objects.Song;
 

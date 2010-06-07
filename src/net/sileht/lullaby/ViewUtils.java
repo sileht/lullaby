@@ -18,9 +18,14 @@ package net.sileht.lullaby;
 * | Boston, MA  02111-1307, USA.                                           |
 * +------------------------------------------------------------------------+
 */
+import net.sileht.lullaby.backend.Player;
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.database.Cursor;
+import android.os.IBinder;
 import android.view.ContextMenu;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -71,8 +76,25 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 
 	private Activity mCurrentActivity;
 
+	// Bind Service Player
+	private Player mPlayer;
+	private ServiceConnection mPlayerConnection = new ServiceConnection() {
+		
+		@Override
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			mPlayer = ((Player.PlayerBinder)service).getService();
+	    }
+
+		@Override
+		public void onServiceDisconnected(ComponentName className) {
+			mPlayer = null;
+	    }
+	};
+	
 	public ViewUtils(Activity activity) {
 		mCurrentActivity = activity;
+		activity.bindService(new Intent(mCurrentActivity, 
+				Player.class), mPlayerConnection, Context.BIND_AUTO_CREATE);
 	}
 
 	public void startSongsActivity(String type, String id, String title) {
@@ -124,7 +146,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			String songId = cursor.getString(cursor
 					.getColumnIndexOrThrow(SONG_ID));
 
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] { "song",
+			mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] { "song",
 					songId });
 		}
 	}
@@ -142,7 +164,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			int tracks = cursor.getInt(cursor
 					.getColumnIndexOrThrow(ARTIST_TRACKS));
 
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] {
+			mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
 					"artist_songs", artistId });
 
 			Toast.makeText(mCurrentActivity,
@@ -162,7 +184,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 					"Enqueue " + album + ": " + tracks + " songs",
 					Toast.LENGTH_LONG).show();
 
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] {
+			mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
 					"album_songs", albumId });
 
 		} else if (cursor.getColumnName(1) == SONG_NAME) {
@@ -178,7 +200,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 					"Enqueue " + song + " - " + artist, Toast.LENGTH_LONG)
 					.show();
 
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] { "song",
+			mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] { "song",
 					songId });
 
 		} else if (cursor.getColumnName(1) == PLAYLIST_NAME) {
@@ -194,7 +216,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 					"Enqueue " + playlistName + ": " + tracks + " songs",
 					Toast.LENGTH_LONG).show();
 
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] {
+			mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
 					"playlist_songs", playlistId });
 
 		}
@@ -212,5 +234,9 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 		menu.add(0, MENU_ENQUEUE, 0, "Enqueue").setIcon(android.R.drawable.ic_menu_add);
 		menu.add(0, MENU_ENQUEUE_PLAY, 0, "Enqueue and Play").setIcon(android.R.drawable.ic_menu_add);
 		
+	}
+	
+	public void onStop(){
+	    mCurrentActivity.unbindService(mPlayerConnection);		
 	}
 }

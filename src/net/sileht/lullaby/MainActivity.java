@@ -25,8 +25,6 @@ import net.sileht.lullaby.backend.Player;
 import net.sileht.lullaby.objects.Song;
 
 import android.app.ActivityGroup;
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;

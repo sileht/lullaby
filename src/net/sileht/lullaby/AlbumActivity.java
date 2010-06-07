@@ -44,10 +44,8 @@ import android.widget.TextView;
 public class AlbumActivity extends Activity{
 
 	private MatrixCursor albumsData;
-
-
 	private SimpleCursorAdapter mAdapter;
-
+	private ViewUtils mViewUtils;
 
 	static class ViewHolder {
 		TextView line1;
@@ -61,10 +59,10 @@ public class AlbumActivity extends Activity{
 		
 		setContentView(R.layout.list_classic);
 		ListView lv = (ListView) findViewById(R.id.list);
-		ViewUtils e = new ViewUtils(this);
-		lv.setOnItemClickListener(e);
-		lv.setOnItemLongClickListener(e);
-		lv.setOnCreateContextMenuListener(e);
+		mViewUtils = new ViewUtils(this);
+		lv.setOnItemClickListener(mViewUtils);
+		lv.setOnItemLongClickListener(mViewUtils);
+		lv.setOnCreateContextMenuListener(mViewUtils);
 		
 		if (albumsData == null) {
 			// Tell them we're loading
@@ -90,6 +88,11 @@ public class AlbumActivity extends Activity{
 		}
 		mAdapter = new AlbumsAdapter(this, albumsData);
 		lv.setAdapter(mAdapter);
+	}
+	
+	protected void onStop(){
+		mViewUtils.onStop();
+		super.onStop();
 	}
 
 	static class AlbumsAdapter extends SimpleCursorAdapter  implements SectionIndexer{

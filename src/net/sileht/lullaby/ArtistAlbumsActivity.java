@@ -53,7 +53,7 @@ public class ArtistAlbumsActivity extends Activity {
 	private SimpleCursorTreeAdapter mAdapter;
 	private ExpandableListView mListView;
 
-	private ViewUtils mVU = new ViewUtils(this);
+	private ViewUtils mViewUtils;
 
 	static class ViewHolder {
 		TextView line1;
@@ -69,10 +69,11 @@ public class ArtistAlbumsActivity extends Activity {
 
 		mListView = (ExpandableListView) findViewById(R.id.list);
 		AlbumClickListener albumCL = new AlbumClickListener();
+		mViewUtils = new ViewUtils(this);
 		mListView.setOnChildClickListener(albumCL);
 		mListView.setOnGroupExpandListener(albumCL);
-		mListView.setOnItemLongClickListener(mVU);
-		mListView.setOnCreateContextMenuListener(mVU);
+		mListView.setOnItemLongClickListener(mViewUtils);
+		mListView.setOnCreateContextMenuListener(mViewUtils);
 
 		if (artistsData == null || albumsData == null) {
 			// Tell them we're loading
@@ -102,6 +103,11 @@ public class ArtistAlbumsActivity extends Activity {
 
 	}
 
+	protected void onStop(){
+		mViewUtils.onStop();
+		super.onStop();
+	}
+	
 	private class AlbumClickListener implements
 			ExpandableListView.OnChildClickListener, ExpandableListView.OnGroupExpandListener {
 		@Override
@@ -119,7 +125,7 @@ public class ArtistAlbumsActivity extends Activity {
 			String artist = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ARTIST));
 
-			mVU.startSongsActivity("album_songs", albumId, album + " - "
+			mViewUtils.startSongsActivity("album_songs", albumId, album + " - "
 					+ artist);
 			return false;
 		}

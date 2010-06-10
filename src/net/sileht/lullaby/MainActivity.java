@@ -203,6 +203,16 @@ public class MainActivity extends ActivityGroup {
 
 		Lullaby.pl.load(this);
 	}
+	
+	protected void onResume(){
+		super.onResume();
+		Lullaby.mp.hideNotification();
+	}
+
+	protected void onPause(){
+		Lullaby.mp.showNotification();
+		super.onPause();
+	}
 
 	private void checkConnection() {
 		boolean isConnectedToAmpacheTest = (Lullaby.comm.authToken != null && !Lullaby.comm.authToken
@@ -453,10 +463,9 @@ public class MainActivity extends ActivityGroup {
 			if (fromUser && Lullaby.mp.isSeekable()) {
 				int duration = Lullaby.mp.getDuration();
 				int seek = (int) (progress * duration / 1000L);
-				
-				int preloaded = (int) (Lullaby.mp.getBuffer() * duration / 1000L);
-				
-				if (preloaded <= seek){
+				int preloaded = Lullaby.mp.getBuffer()  * duration;
+				Log.d(TAG, "seek: " + Utils.stringForTime(seek) + " buf " + Lullaby.mp.getBuffer() + " preload: " + Utils.stringForTime(preloaded));
+				if (seek <= preloaded){
 					Log.d(TAG, "Seeking to " + Utils.stringForTime(seek));
 					Lullaby.mp.seekTo(seek);
 				}

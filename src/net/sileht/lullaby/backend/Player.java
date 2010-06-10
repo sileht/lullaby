@@ -64,6 +64,7 @@ public class Player {
 
 	private NotificationManager mNM;
 	private Notification mNotification;
+	private NotificationManager mNotificationManager;
 
 	public static abstract class PlayerListener {
 		abstract public void onTogglePlaying(boolean playing);
@@ -92,15 +93,18 @@ public class Player {
 		mPlayer.setOnCompletionListener(mMediaPlayerListener);
 		mPlayer.setOnBufferingUpdateListener(mMediaPlayerListener);
 
-		setState(STATE.Idle);
-	}
-	public void showNotification() {
 		mNotification = new Notification(R.drawable.icon, mContext
 				.getString(R.string.app_name), System.currentTimeMillis());
-		NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotification.flags &= Notification.FLAG_NO_CLEAR; 
+		
+		mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+		
+		setState(STATE.Idle);
+	}
+	
+	public void showNotification() {
 		updateNotification("Nop", "Nop");
 		mNotificationManager.notify(1, mNotification);
-
 	}
 
 	public void updateNotification(CharSequence title, CharSequence text) {
@@ -108,6 +112,14 @@ public class Player {
 		PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0,
 				notificationIntent, 0);
 		mNotification.setLatestEventInfo(mContext, title, text, contentIntent);
+		mNotificationManager.notify(1, mNotification);
+	}
+	
+	public void hideNotification() {
+		Intent notificationIntent = new Intent(mContext, MainActivity.class);
+		PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0,
+				notificationIntent, 0);
+		mNotification.setLatestEventInfo(mContext, "", "", contentIntent);
 	}
 
 	private void setState(STATE state) {
@@ -175,6 +187,7 @@ public class Player {
 		for (PlayerListener obj : mPlayerListeners) {
 			obj.onNewSongPlaying(mSong);
 		}
+		updateNotification(mSong.name, mSong.album + " - " + mSong.artist);
 
 		mPlayer.reset();
 		try {

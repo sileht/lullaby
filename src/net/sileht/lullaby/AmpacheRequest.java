@@ -40,7 +40,7 @@ public abstract class AmpacheRequest extends Handler {
 	
 	private boolean stop = false;
 	
-	private static final String TAG = "DroidZikBackendRequest";
+	private static final String TAG = "LullabyBackendRequest";
 
 	public AmpacheRequest(Activity activity, String[] directive) {
 		this(activity, directive, false);

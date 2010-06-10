@@ -44,7 +44,7 @@ public class PlayingPlaylistActivity extends ListActivity implements
 	private PlayingPlaylistAdapter mAdapter;
 	private ListView mView;
 
-	//private static final String TAG = "DroidZikPlayingPlaylist";
+	//private static final String TAG = "LullabyPlayingPlaylist";
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

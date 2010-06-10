@@ -1,25 +1,25 @@
 package net.sileht.lullaby.backend;
 
 /* Copyright (c) 2008 Kevin James Purdy <purdyk@onid.orst.edu>
-*  Copyright (c) 2010 ABAAKOUK Mehdi  <theli48@gmail.com>
-*
-* +------------------------------------------------------------------------+
-* | This program is free software; you can redistribute it and/or          |
-* | modify it under the terms of the GNU General Public License            |
-* | as published by the Free Software Foundation; either version 2         |
-* | of the License, or (at your option) any later version.                 |
-* |                                                                        |
-* | This program is distributed in the hope that it will be useful,        |
-* | but WITHOUT ANY WARRANTY; without even the implied warranty of         |
-* | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          |
-* | GNU General Public License for more details.                           |
-* |                                                                        |
-* | You should have received a copy of the GNU General Public License      |
-* | along with this program; if not, write to the Free Software            |
-* | Foundation, Inc., 59 Temple Place - Suite 330,                         |
-* | Boston, MA  02111-1307, USA.                                           |
-* +------------------------------------------------------------------------+
-*/
+ *  Copyright (c) 2010 ABAAKOUK Mehdi  <theli48@gmail.com>
+ *
+ * +------------------------------------------------------------------------+
+ * | This program is free software; you can redistribute it and/or          |
+ * | modify it under the terms of the GNU General Public License            |
+ * | as published by the Free Software Foundation; either version 2         |
+ * | of the License, or (at your option) any later version.                 |
+ * |                                                                        |
+ * | This program is distributed in the hope that it will be useful,        |
+ * | but WITHOUT ANY WARRANTY; without even the implied warranty of         |
+ * | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          |
+ * | GNU General Public License for more details.                           |
+ * |                                                                        |
+ * | You should have received a copy of the GNU General Public License      |
+ * | along with this program; if not, write to the Free Software            |
+ * | Foundation, Inc., 59 Temple Place - Suite 330,                         |
+ * | Boston, MA  02111-1307, USA.                                           |
+ * +------------------------------------------------------------------------+
+ */
 
 import java.net.*;
 import java.io.*;
@@ -28,6 +28,8 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import net.sileht.lullaby.objects.*;
 import android.content.Context;
@@ -59,29 +61,41 @@ public class AmpacheBackend extends HandlerThread {
 	public Boolean hasAlreadyTryHandshake = false;
 	public Boolean hasSettingsIncorrect = false;
 
-	private static final String TAG = "DroidZikAmpacheConnector";
+	public Timer mTimerPing;
+	private TimerTask mTimerTask;
+
+	private static final long PING_PERIOD = 5 * 60 * 100; // 5 minutes
+
+	private static final String TAG = "LullabyAmpacheConnector";
 
 	public AmpacheBackend(Context context) throws Exception {
 		super("AmpacheBackend");
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		System.setProperty("org.xml.sax.driver", "org.xmlpull.v1.sax2.Driver");
 		reader = XMLReaderFactory.createXMLReader();
+		mTimerPing = new Timer();
 		setDaemon(true);
 		start();
 	}
-	
-	public void force_auth_request(){
-		hasSettingsIncorrect = false;
-		authToken = "";
+
+	public void force_auth_request() {
+		disconnect();
 		ping();
 	}
-	
+
 	public void ping() {
 		if (incomingRequestHandler != null) {
 			Message msgauth = new Message();
 			msgauth.obj = new String[] { "ping", "" };
 			incomingRequestHandler.sendMessageAtFrontOfQueue(msgauth);
 		}
+	}
+
+	public void disconnect() {
+		mTimerTask.cancel();
+		mTimerTask = null;
+		hasSettingsIncorrect = false;
+		authToken = "";
 	}
 
 	public boolean isConfigured() {
@@ -201,7 +215,8 @@ public class AmpacheBackend extends HandlerThread {
 				}
 
 				return prefs.getString("server_url_preference", "")
-						+ "/server/xml.server.php?action=" + action + append + range;
+						+ "/server/xml.server.php?action=" + action + append
+						+ range;
 
 			}
 
@@ -213,7 +228,7 @@ public class AmpacheBackend extends HandlerThread {
 				try {
 					dataIn = new InputSource(new URL(url).openStream());
 				} catch (MalformedURLException e) {
-					authToken = "";
+					disconnect();
 					hasSettingsIncorrect = true;
 					return null;
 				} catch (IOException e) {
@@ -254,6 +269,16 @@ public class AmpacheBackend extends HandlerThread {
 					hasAlreadyTryHandshake = true;
 					authToken = ((AmpacheAuthParser) hand).token;
 					Log.d(TAG, "Ampache connected.");
+
+					mTimerTask = new TimerTask() {
+						@Override
+						public void run() {
+							ping();
+						}
+					};
+
+					mTimerPing.schedule(mTimerTask, PING_PERIOD, PING_PERIOD);
+
 					return true;
 				}
 			}
@@ -278,14 +303,13 @@ public class AmpacheBackend extends HandlerThread {
 
 				Log.d(TAG, "Backend handle new message: " + action);
 
-
 				if (authToken.equals("")) {
-					if(!makeAuthentification()){
+					if (!makeAuthentification()) {
 						this.waitAndsend(Message.obtain(msg));
 						return;
 					}
 				}
-				
+
 				String url = getUrlFor(action, filter, offset);
 				AmpacheHandler hand = makeRequest(url, action);
 
@@ -315,7 +339,7 @@ public class AmpacheBackend extends HandlerThread {
 					reply.arg1 = offset;
 				}
 
-				if (msg.what != 0 ) {
+				if (msg.what != 0) {
 					try {
 						msg.replyTo.send(reply);
 					} catch (Exception poo) {

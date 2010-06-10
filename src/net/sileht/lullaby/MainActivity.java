@@ -453,8 +453,13 @@ public class MainActivity extends ActivityGroup {
 			if (fromUser && Lullaby.mp.isSeekable()) {
 				int duration = Lullaby.mp.getDuration();
 				int seek = (int) (progress * duration / 1000L);
-				Log.d(TAG, "Seeking to " + Utils.stringForTime(seek));
-				Lullaby.mp.seekTo(seek);
+				
+				int preloaded = (int) (Lullaby.mp.getBuffer() * duration / 1000L);
+				
+				if (preloaded <= seek){
+					Log.d(TAG, "Seeking to " + Utils.stringForTime(seek));
+					Lullaby.mp.seekTo(seek);
+				}
 			}
 		}
 	}

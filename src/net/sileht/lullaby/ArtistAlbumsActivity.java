@@ -45,7 +45,7 @@ import android.widget.TextView;
 
 public class ArtistAlbumsActivity extends Activity {
 
-	private static String TAG = "DroidzikArtistAlbumsActivity";
+	private static String TAG = "LullabyArtistAlbumsActivity";
 
 	private MatrixCursor artistsData;
 	private HashMap<String, MatrixCursor> albumsData;

@@ -24,9 +24,15 @@ package net.sileht.lullaby.backend;
 import java.util.ArrayList;
 
 import net.sileht.lullaby.Lullaby;
+import net.sileht.lullaby.MainActivity;
+import net.sileht.lullaby.R;
 import net.sileht.lullaby.objects.Song;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.telephony.PhoneStateListener;
@@ -37,7 +43,7 @@ public class Player {
 
 	private MediaPlayer mPlayer;
 
-	private static String TAG = "DroidZikPlayer";
+	private static String TAG = "LPlayer";
 	private Song mSong;
 	private int mBuffering = -1;
 
@@ -56,12 +62,16 @@ public class Player {
 
 	private ArrayList<PlayerListener> mPlayerListeners;
 
+	private NotificationManager mNM;
+	private Notification mNotification;
+
 	public static abstract class PlayerListener {
 		abstract public void onTogglePlaying(boolean playing);
 
 		abstract public void onNewSongPlaying(Song song);
 
 		abstract public void onBuffering(int buffer);
+
 		abstract public void onPlayerStopped();
 	}
 
@@ -83,6 +93,21 @@ public class Player {
 		mPlayer.setOnBufferingUpdateListener(mMediaPlayerListener);
 
 		setState(STATE.Idle);
+	}
+	public void showNotification() {
+		mNotification = new Notification(R.drawable.icon, mContext
+				.getString(R.string.app_name), System.currentTimeMillis());
+		NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+		updateNotification("Nop", "Nop");
+		mNotificationManager.notify(1, mNotification);
+
+	}
+
+	public void updateNotification(CharSequence title, CharSequence text) {
+		Intent notificationIntent = new Intent(mContext, MainActivity.class);
+		PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0,
+				notificationIntent, 0);
+		mNotification.setLatestEventInfo(mContext, title, text, contentIntent);
 	}
 
 	private void setState(STATE state) {
@@ -133,7 +158,8 @@ public class Player {
 	public void playSong(Song song) {
 		setState(STATE.Idle);
 
-		String uri = song.url.replaceFirst(".ogg$", ".mp3").replaceFirst(".flac$", ".mp3").replaceFirst(".m4a$", ".mp3").replaceAll(
+		String uri = song.url.replaceFirst(".ogg$", ".mp3").replaceFirst(
+				".flac$", ".mp3").replaceFirst(".m4a$", ".mp3").replaceAll(
 				"sid=[^&]+", "sid=" + Lullaby.comm.authToken);
 		Log.v(TAG, "Playing uri: " + uri);
 
@@ -218,6 +244,7 @@ public class Player {
 	}
 
 	public void quit() {
+		mNM.cancel(1);
 		TelephonyManager tmgr = (TelephonyManager) mContext
 				.getSystemService(Context.TELEPHONY_SERVICE);
 		tmgr.listen(mPhoneStateListener, 0);

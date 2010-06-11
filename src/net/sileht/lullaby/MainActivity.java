@@ -301,7 +301,6 @@ public class MainActivity extends ActivityGroup {
 			mProgress.setSecondaryProgress(percent * 10);
 			mTimeView.setText(Utils.stringForTime(position));
 			mDurationView.setText(Utils.stringForTime(duration));
-
 		} else {
 			mProgress.setProgress(0);
 			mProgress.setSecondaryProgress(0);

@@ -64,8 +64,6 @@ public class Player extends Service {
 
 	public PlayingPlaylist mPlaylist;
 
-	private Notification mNotification;
-
 	public static abstract class PlayerListener {
 		abstract public void onTogglePlaying(boolean playing);
 
@@ -101,11 +99,6 @@ public class Player extends Service {
 
 		setState(STATE.Idle);
 
-		mNotification = new Notification(R.drawable.icon, this
-				.getString(R.string.app_name), System.currentTimeMillis());
-		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-		updateNotification("Lullaby stopped", "");
-
 		Log.v(TAG, "Lullaby Player Service Start");
 	}
 
@@ -128,7 +121,15 @@ public class Player extends Service {
 			obj.onTogglePlaying(isPlaying());
 		}
 		if (isPlaying()) {
-			startForeground(1, mNotification);
+			Notification n = new Notification();
+			n.icon = R.drawable.icon;
+			n.tickerText = "Playing " + mSong.name;
+			n.flags |= Notification.FLAG_ONGOING_EVENT;
+			Intent notificationIntent = new Intent(this, MainActivity.class);
+			PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+					notificationIntent, 0);
+			n.setLatestEventInfo(this, mSong.name, mSong.album + " - " + mSong.artist, contentIntent);
+			startForeground(1, n);
 		} else {
 			stopForeground(true);
 		}
@@ -191,7 +192,6 @@ public class Player extends Service {
 		for (PlayerListener obj : mPlayerListeners) {
 			obj.onNewSongPlaying(mSong);
 		}
-		updateNotification(mSong.name, mSong.album + " - " + mSong.artist);
 
 		mPlayer.reset();
 		try {
@@ -266,13 +266,6 @@ public class Player extends Service {
 			StatusChangeObject.onNewSongPlaying(mSong);
 			StatusChangeObject.onTogglePlaying(isPlaying());
 		}
-	}
-
-	public void updateNotification(CharSequence title, CharSequence text) {
-		Intent notificationIntent = new Intent(this, MainActivity.class);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				notificationIntent, 0);
-		mNotification.setLatestEventInfo(this, title, text, contentIntent);
 	}
 
 	private class MyMediaPlayerListener implements

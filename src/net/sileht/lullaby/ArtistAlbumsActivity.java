@@ -33,7 +33,6 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.text.Editable;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -104,10 +103,6 @@ public class ArtistAlbumsActivity extends Activity {
 			mAdapter = getNewAdapter();
 		}
 		mListView.setAdapter(mAdapter);
-
-	}
-
-	public void afterTextChanged(Editable s) {
 
 	}
 

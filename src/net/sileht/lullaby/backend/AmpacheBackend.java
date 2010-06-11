@@ -92,7 +92,7 @@ public class AmpacheBackend extends HandlerThread {
 	}
 
 	public void disconnect() {
-		mTimerTask.cancel();
+		if(mTimerTask != null) mTimerTask.cancel();
 		mTimerTask = null;
 		hasSettingsIncorrect = false;
 		authToken = "";

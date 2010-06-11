@@ -29,7 +29,6 @@ import net.sileht.lullaby.R;
 import net.sileht.lullaby.objects.Song;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -41,13 +40,12 @@ import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.Toast;
 
 public class Player extends Service {
 
 	private MediaPlayer mPlayer;
 
-	private static String TAG = "LPlayer";
+	private static String TAG = "LullabyPlayer";
 	private Song mSong;
 	private int mBuffering = -1;
 
@@ -67,7 +65,6 @@ public class Player extends Service {
 	public PlayingPlaylist mPlaylist;
 
 	private Notification mNotification;
-	private NotificationManager mNotificationManager;
 
 	public static abstract class PlayerListener {
 		abstract public void onTogglePlaying(boolean playing);
@@ -79,18 +76,13 @@ public class Player extends Service {
 		abstract public void onPlayerStopped();
 	}
 
-	/**
-	 * Class for clients to access. Because we know this service always runs in
-	 * the same process as its clients, we don't need to deal with IPC.
-	 */
-	public class PlayerBinder extends Binder {
-		public Player getService() {
-			return Player.this;
-		}
-	}
-
 	@Override
 	public void onCreate() {
+
+		Context ctx = getApplicationContext();
+		TelephonyManager tmgr = (TelephonyManager) ctx
+				.getSystemService(Context.TELEPHONY_SERVICE);
+		tmgr.listen(mPhoneStateListener, 0);
 
 		mPlaylist = new PlayingPlaylist(this);
 
@@ -107,19 +99,14 @@ public class Player extends Service {
 		mPlayer.setOnCompletionListener(mMediaPlayerListener);
 		mPlayer.setOnBufferingUpdateListener(mMediaPlayerListener);
 
-		mNotificationManager = (NotificationManager) this
-				.getSystemService(Context.NOTIFICATION_SERVICE);
+		setState(STATE.Idle);
+
 		mNotification = new Notification(R.drawable.icon, this
 				.getString(R.string.app_name), System.currentTimeMillis());
 		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+		updateNotification("Lullaby stopped", "");
 
-		setState(STATE.Idle);
-
-		showNotification();
-
-		Toast
-				.makeText(this, "Lullaby Player Service Start",
-						Toast.LENGTH_SHORT).show();
+		Log.v(TAG, "Lullaby Player Service Start");
 	}
 
 	@Override
@@ -131,42 +118,7 @@ public class Player extends Service {
 
 	@Override
 	public void onDestroy() {
-		hideNotification();
-
-		Toast.makeText(this, "Lullaby Player Service Stopped",
-				Toast.LENGTH_SHORT).show();
-
-		Context ctx = getApplicationContext();
-		TelephonyManager tmgr = (TelephonyManager) ctx
-				.getSystemService(Context.TELEPHONY_SERVICE);
-		tmgr.listen(mPhoneStateListener, 0);
-
-	}
-
-	@Override
-	public IBinder onBind(Intent intent) {
-		return mBinder;
-	}
-
-	// This is the object that receives interactions from clients. See
-	// RemoteService for a more complete example.
-	private final IBinder mBinder = new PlayerBinder();
-
-	public void showNotification() {
-		if (mState.equals(STATE.Started)) {
-			mNotificationManager.notify(1, mNotification);
-		}
-	}
-
-	public void hideNotification() {
-		mNotificationManager.cancel(1);
-	}
-
-	public void updateNotification(CharSequence title, CharSequence text) {
-		Intent notificationIntent = new Intent(this, MainActivity.class);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				notificationIntent, 0);
-		mNotification.setLatestEventInfo(this, title, text, contentIntent);
+		stopForeground(true);
 	}
 
 	private void setState(STATE state) {
@@ -174,6 +126,11 @@ public class Player extends Service {
 
 		for (PlayerListener obj : mPlayerListeners) {
 			obj.onTogglePlaying(isPlaying());
+		}
+		if (isPlaying()) {
+			startForeground(1, mNotification);
+		} else {
+			stopForeground(true);
 		}
 
 		String st = "";
@@ -305,6 +262,17 @@ public class Player extends Service {
 
 	public void setPlayerListener(PlayerListener StatusChangeObject) {
 		mPlayerListeners.add(StatusChangeObject);
+		if (mSong != null) {
+			StatusChangeObject.onNewSongPlaying(mSong);
+			StatusChangeObject.onTogglePlaying(isPlaying());
+		}
+	}
+
+	public void updateNotification(CharSequence title, CharSequence text) {
+		Intent notificationIntent = new Intent(this, MainActivity.class);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				notificationIntent, 0);
+		mNotification.setLatestEventInfo(this, title, text, contentIntent);
 	}
 
 	private class MyMediaPlayerListener implements
@@ -335,13 +303,7 @@ public class Player extends Service {
 			Log.v(TAG, "Completion");
 			Song song = mPlaylist.playNext();
 			if (song == null) {
-				for (PlayerListener obj : mPlayerListeners) {
-					obj.onPlayerStopped();
-				}
-				mPlayer.stop();
-				mPlayer.reset();
-				setState(STATE.Stopped);
-				hideNotification();
+				stop();
 			}
 		}
 
@@ -349,6 +311,15 @@ public class Player extends Service {
 		public void onBufferingUpdate(MediaPlayer mp, int buffer) {
 			updateBuffer(buffer);
 		}
+	}
+
+	public void stop() {
+		for (PlayerListener obj : mPlayerListeners) {
+			obj.onPlayerStopped();
+		}
+		setState(STATE.Stopped);
+		mPlayer.stop();
+		mPlayer.reset();
 	}
 
 	// Handle phone calls
@@ -382,4 +353,24 @@ public class Player extends Service {
 			}
 		}
 	}
+
+	/**
+	 * Class for clients to access. Because we know this service always runs in
+	 * the same process as its clients, we don't need to deal with IPC.
+	 */
+	public class PlayerBinder extends Binder {
+		public Player getService() {
+			return Player.this;
+		}
+	}
+
+	// This is the object that receives interactions from clients. See
+	// RemoteService for a more complete example.
+	private final IBinder mBinder = new PlayerBinder();
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		return mBinder;
+	}
+
 }

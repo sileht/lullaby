@@ -79,37 +79,55 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 	public static final String[] mPlaylistsColumnName = new String[] {
 			PLAYLIST_ID, PLAYLIST_NAME, PLAYLIST_TRACKS, PLAYLIST_OWNER };
 
-	private Activity mCurrentActivity;
+	private Context mContext;
 
 	// Bind Service Player
 	private Player mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
-		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mPlayer = ((Player.PlayerBinder) service).getService();
+			Log.v(TAG, "View Utils connected to player");
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName className) {
 			mPlayer = null;
 		}
 	};
 
-	public ViewUtils(Activity activity) {
-		mCurrentActivity = activity;
-		activity.startService(new Intent(mCurrentActivity, Player.class));
-		activity.bindService(new Intent(mCurrentActivity, Player.class),
-				mPlayerConnection, Context.BIND_AUTO_CREATE);
+	public ViewUtils(Context context) {
+		mContext = context;
+	}
+
+	public void onStart() {
+		onStart(true);
+	}
+	
+	public void onStart(boolean useActivityGroup) {
+		Context c = null;
+		if (useActivityGroup){
+			c = (Context) ((Activity) mContext).getParent();
+		}else{
+		c = mContext;
+		} 
+		c.startService(new Intent(c, Player.class));
+		c.bindService(new Intent(c, Player.class),
+				mPlayerConnection, 0);
+	}
+
+	public void onStop() {
+		try {
+		    mContext.unbindService(mPlayerConnection);
+		} catch(Exception e) {
+		}
 	}
 
 	public void startSongsActivity(String type, String id, String title) {
-		Intent intent = new Intent().setClass(mCurrentActivity,
-				SongsActivity.class);
+		Intent intent = new Intent().setClass(mContext, SongsActivity.class);
 		intent.putExtra("type", type);
 		intent.putExtra("id", id);
 		intent.putExtra("title", title);
-		mCurrentActivity.startActivity(intent);
+		mContext.startActivity(intent);
 	}
 
 	@Override
@@ -154,8 +172,8 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 					.getColumnIndexOrThrow(SONG_ID));
 
 			if (mPlayer != null) {
-				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
-						"song", songId });
+				mPlayer.mPlaylist.appendSongs(mContext, new String[] { "song",
+						songId });
 			} else {
 				Log.w(TAG, "Player not started!?");
 			}
@@ -176,9 +194,9 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 					.getColumnIndexOrThrow(ARTIST_TRACKS));
 
 			if (mPlayer != null) {
-				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
+				mPlayer.mPlaylist.appendSongs(mContext, new String[] {
 						"artist_songs", artistId });
-				Toast.makeText(mCurrentActivity,
+				Toast.makeText(mContext,
 						"Enqueue " + artist + ": " + tracks + " songs",
 						Toast.LENGTH_LONG).show();
 			} else {
@@ -195,9 +213,9 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 					.getColumnIndexOrThrow(ALBUM_TRACKS));
 
 			if (mPlayer != null) {
-				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
+				mPlayer.mPlaylist.appendSongs(mContext, new String[] {
 						"album_songs", albumId });
-				Toast.makeText(mCurrentActivity,
+				Toast.makeText(mContext,
 						"Enqueue " + album + ": " + tracks + " songs",
 						Toast.LENGTH_LONG).show();
 			} else {
@@ -214,11 +232,10 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 					.getColumnIndexOrThrow(SONG_ARTIST));
 
 			if (mPlayer != null) {
-				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
-						"song", songId });
-				Toast.makeText(mCurrentActivity,
-						"Enqueue " + song + " - " + artist, Toast.LENGTH_LONG)
-						.show();
+				mPlayer.mPlaylist.appendSongs(mContext, new String[] { "song",
+						songId });
+				Toast.makeText(mContext, "Enqueue " + song + " - " + artist,
+						Toast.LENGTH_LONG).show();
 			} else {
 				Log.w(TAG, "Player not started!?");
 			}
@@ -233,15 +250,15 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 					.getColumnIndexOrThrow(PLAYLIST_TRACKS));
 
 			if (mPlayer != null) {
-				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
+				mPlayer.mPlaylist.appendSongs(mContext, new String[] {
 						"playlist_songs", playlistId });
-				Toast.makeText(mCurrentActivity,
+				Toast.makeText(mContext,
 						"Enqueue " + playlistName + ": " + tracks + " songs",
 						Toast.LENGTH_LONG).show();
 			} else {
 				Log.w(TAG, "Player not started!?");
 			}
-			
+
 		}
 		return true;
 	}
@@ -260,9 +277,5 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 		menu.add(0, MENU_ENQUEUE_PLAY, 0, "Enqueue and Play").setIcon(
 				android.R.drawable.ic_menu_add);
 
-	}
-
-	public void onStop() {
-		mCurrentActivity.unbindService(mPlayerConnection);
 	}
 }

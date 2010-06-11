@@ -51,7 +51,7 @@ public class PlaylistsActivity extends Activity {
 
 		setContentView(R.layout.list_classic);
 		ListView lv = (ListView) findViewById(R.id.list);
-		mViewUtils= new ViewUtils(this);
+		mViewUtils = new ViewUtils(this);
 		lv.setOnItemClickListener(mViewUtils);
 		lv.setOnItemLongClickListener(mViewUtils);
 		lv.setOnCreateContextMenuListener(mViewUtils);
@@ -85,6 +85,13 @@ public class PlaylistsActivity extends Activity {
 
 	}
 
+	@Override
+	protected void onStart() {
+		super.onStart();
+		mViewUtils.onStart();
+	}
+	
+	@Override
 	protected void onStop(){
 		mViewUtils.onStop();
 		super.onStop();

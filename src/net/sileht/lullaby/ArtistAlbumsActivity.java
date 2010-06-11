@@ -107,6 +107,14 @@ public class ArtistAlbumsActivity extends Activity {
 
 	}
 
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		mViewUtils.onStart();
+	}
+	
+	@Override
 	protected void onStop(){
 		mViewUtils.onStop();
 		super.onStop();
@@ -223,7 +231,7 @@ public class ArtistAlbumsActivity extends Activity {
 					@Override
 					public void add_objects(ArrayList list) {
 						for (Album album : (ArrayList<Album>) list) {
-							MatrixCursor cur = ((ArtistAlbumsActivity) this.mCurrentActivity).albumsData
+							MatrixCursor cur = ((ArtistAlbumsActivity) this.mContext).albumsData
 									.get(this.mDirective[1]);
 							cur.newRow().add(album.id).add(album.name).add(
 									album.artist).add(album.tracks).add(

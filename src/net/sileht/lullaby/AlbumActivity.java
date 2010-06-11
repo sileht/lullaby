@@ -94,7 +94,15 @@ public class AlbumActivity extends Activity{
 		mAdapter = new AlbumsAdapter(this, albumsData);
 		lv.setAdapter(mAdapter);
 	}
-	
+
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		mViewUtils.onStart();
+	}
+
+	@Override
 	protected void onStop(){
 		mViewUtils.onStop();
 		super.onStop();

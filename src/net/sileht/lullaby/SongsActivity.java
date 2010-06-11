@@ -119,13 +119,18 @@ public class SongsActivity extends Activity {
 		lv.setAdapter(mAdapter);
 	}
 
-
+	@Override
+	protected void onStart() {
+		super.onStart();
+		mViewUtils.onStart(!mStandAloneActivity);
+	}
+	
+	@Override
 	protected void onStop(){
 		request.stop();
 		mViewUtils.onStop();
 		super.onStop();
 	}
-	
 
 	private SimpleCursorAdapter getNewAdapter() {
 		int r;

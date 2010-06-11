@@ -29,7 +29,6 @@ import java.util.Collections;
 import net.sileht.lullaby.AmpacheRequest;
 import net.sileht.lullaby.objects.Song;
 
-import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
@@ -194,8 +193,8 @@ public class PlayingPlaylist {
 		updateAdapter();
 	}
 
-	public void appendSongs(Activity activity, String[] directive) {
-		AmpacheRequest request = new AmpacheRequest(activity, directive, true) {
+	public void appendSongs(Context context, String[] directive) {
+		AmpacheRequest request = new AmpacheRequest(context, directive, true) {
 			@SuppressWarnings("unchecked")
 			@Override
 			public void add_objects(ArrayList list) {

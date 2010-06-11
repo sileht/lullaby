@@ -71,10 +71,6 @@ public class PlayingPlaylistActivity extends ListActivity implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		startService(new Intent(PlayingPlaylistActivity.this, Player.class));
-		bindService(new Intent(PlayingPlaylistActivity.this, Player.class),
-				mPlayerConnection, Context.BIND_AUTO_CREATE);
-
 		setContentView(R.layout.playing_playlist_activity);
 
 		if (mAdapter == null) {
@@ -94,6 +90,14 @@ public class PlayingPlaylistActivity extends ListActivity implements
 
 	}
 
+	@Override
+	protected void onStart(){
+		super.onStart();
+		Context c = this.getParent();
+		c.startService(new Intent(c, Player.class));
+		c.bindService(new Intent(c, Player.class),
+				mPlayerConnection, Context.BIND_AUTO_CREATE);
+	}
 	private final static int MENU_PLAY_SELECTION = 0;
 	private final static int MENU_DELETE_ITEM = 1;
 

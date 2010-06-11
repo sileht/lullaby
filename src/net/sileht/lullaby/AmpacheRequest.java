@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import net.sileht.lullaby.R;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
@@ -42,7 +43,7 @@ import android.widget.Toast;
 
 public abstract class AmpacheRequest extends Handler {
 
-	protected Activity mCurrentActivity;
+	protected Context mContext;
 	protected String[] mDirective;
 	protected int mMax;
 	protected boolean mQuick;
@@ -56,18 +57,18 @@ public abstract class AmpacheRequest extends Handler {
 
 	private static final String TAG = "LullabyBackendRequest";
 
-	public AmpacheRequest(Activity activity, String[] directive) {
-		this(activity, directive, false);
+	public AmpacheRequest(Context context, String[] directive) {
+		this(context, directive, false);
 	}
 
-	public AmpacheRequest(Activity activity, String[] directive, Boolean quick) {
-		this(activity, directive, quick, true);
+	public AmpacheRequest(Context context, String[] directive, Boolean quick) {
+		this(context, directive, quick, true);
 	}
 
-	public AmpacheRequest(Activity activity, String[] directive, Boolean quick,
+	public AmpacheRequest(Context context, String[] directive, Boolean quick,
 			boolean useCache) {
 		super();
-		mCurrentActivity = activity;
+		mContext = context;
 		mDirective = directive;
 		mQuick = quick;
 		mCachedData = new ArrayList<Object>();
@@ -202,16 +203,16 @@ public abstract class AmpacheRequest extends Handler {
 	public abstract void add_objects(ArrayList<?> list);
 
 	private void hideProgress() {
-		if (mCurrentActivity != null) {
-			ProgressBar p = (ProgressBar) mCurrentActivity
+		if (mContext != null) {
+			ProgressBar p = (ProgressBar) ((Activity) mContext)
 					.findViewById(R.id.progress);
 			p.setVisibility(View.INVISIBLE);
 		}
 	}
 
 	private void showProgress() {
-		if (mCurrentActivity != null) {
-			ProgressBar p = (ProgressBar) mCurrentActivity
+		if (mContext != null) {
+			ProgressBar p = (ProgressBar) ((Activity) mContext)
 					.findViewById(R.id.progress);
 			p.setVisibility(View.VISIBLE);
 		}
@@ -243,8 +244,8 @@ public abstract class AmpacheRequest extends Handler {
 			break;
 		case 100:
 			hideProgress();
-			if (mCurrentActivity != null) {
-				Toast.makeText(mCurrentActivity,
+			if (mContext != null) {
+				Toast.makeText(mContext,
 						"Ampache not configured.\nCheck your settings.",
 						Toast.LENGTH_LONG).show();
 			}
@@ -257,8 +258,8 @@ public abstract class AmpacheRequest extends Handler {
 			break;
 		case 9999:
 			/* handle an error */
-			if (mCurrentActivity != null) {
-				Toast.makeText(mCurrentActivity,
+			if (mContext != null) {
+				Toast.makeText(mContext,
 						"Communicator error:" + (String) msg.obj,
 						Toast.LENGTH_LONG).show();
 			}

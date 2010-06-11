@@ -1,6 +1,7 @@
 package net.sileht.lullaby.objects;
 
 /* Copyright (c) 2008 Kevin James Purdy <purdyk@onid.orst.edu>
+ *  Copyright (c) 2010 ABAAKOUK Mehdi  <theli48@gmail.com>
  *
  * +------------------------------------------------------------------------+
  * | This program is free software; you can redistribute it and/or          |
@@ -20,17 +21,11 @@ package net.sileht.lullaby.objects;
  * +------------------------------------------------------------------------+
  */
 
-import java.io.Serializable;
-
+import java.io.Externalizable;
 import android.os.Parcelable; 
 import android.os.Parcel;
 
-public abstract class ampacheObject implements Parcelable, Serializable{
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+public abstract class ampacheObject implements Parcelable, Externalizable {
 	
 	
 	public String id = "";

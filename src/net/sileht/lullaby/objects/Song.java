@@ -1,6 +1,7 @@
 package net.sileht.lullaby.objects;
 
 /* Copyright (c) 2008 Kevin James Purdy <purdyk@onid.orst.edu>
+ *  Copyright (c) 2010 ABAAKOUK Mehdi  <theli48@gmail.com>
  *
  * +------------------------------------------------------------------------+
  * | This program is free software; you can redistribute it and/or          |
@@ -22,7 +23,6 @@ package net.sileht.lullaby.objects;
 
 import android.os.Parcelable;
 import android.os.Parcel;
-import java.io.Externalizable;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.IOException;
@@ -30,103 +30,105 @@ import java.lang.ClassNotFoundException;
 
 import net.sileht.lullaby.Lullaby;
 
-public class Song extends ampacheObject implements Externalizable {
-    public String artist = "";
-    public String art = "";
-    public String url = "";
-    public String album = "";
-    public String genre = "";
-    public String time = "";
-    public String extra = null;
+public class Song extends ampacheObject {
+	public String artist = "";
+	public String art = "";
+	public String url = "";
+	public String album = "";
+	public String genre = "";
+	public String time = "";
+	public String extra = null;
 
-    public String getType() {
-        return "Song";
-    }
+	public String getType() {
+		return "Song";
+	}
 
-    public String extraString() {
-        if (extra == null) {
-            extra = artist + " - " + album;
-        }
+	public String extraString() {
+		if (extra == null) {
+			extra = artist + " - " + album;
+		}
 
-        return extra;
-    }
+		return extra;
+	}
 
-    public String childString() {
-        return "";
-    }
+	public String childString() {
+		return "";
+	}
 
-    /* Replace the old session id with our current one */
-    public String liveUrl() {
-        return url.replaceAll("sid=[^&]+","sid=" + Lullaby.comm.authToken);
-    }
-    
-    public boolean hasChildren() {
-        return false;
-    }
+	/* Replace the old session id with our current one */
+	public String liveUrl() {
+		return url.replaceAll("sid=[^&]+", "sid=" + Lullaby.comm.authToken);
+	}
 
-    public String[] allChildren() {
-        return null;
-    }
+	public boolean hasChildren() {
+		return false;
+	}
 
-    public Song() {
-    }
+	public String[] allChildren() {
+		return null;
+	}
 
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeString(artist);
-        out.writeString(art);
-        out.writeString(url);
-        out.writeString(album);
-        out.writeString(genre);
-        out.writeString(time);
-        out.writeString(extra);
-    }
+	public Song() {
+	}
 
-    public Song(Parcel in) {
-        super.readFromParcel(in);
-        artist = in.readString();
-        art = in.readString();
-        url = in.readString();
-        album = in.readString();
-        genre = in.readString();
-        time = in.readString();
-        extra = in.readString();
-    }
+	public void writeToParcel(Parcel out, int flags) {
+		super.writeToParcel(out, flags);
+		out.writeString(artist);
+		out.writeString(art);
+		out.writeString(url);
+		out.writeString(album);
+		out.writeString(genre);
+		out.writeString(time);
+		out.writeString(extra);
+	}
 
-    @SuppressWarnings("unchecked")
-	public static final Parcelable.Creator CREATOR
-        = new Parcelable.Creator() {
-                public Song createFromParcel(Parcel in) {
-                    return new Song(in);
-                }
+	public Song(Parcel in) {
+		super.readFromParcel(in);
+		artist = in.readString();
+		art = in.readString();
+		url = in.readString();
+		album = in.readString();
+		genre = in.readString();
+		time = in.readString();
+		extra = in.readString();
+	}
 
-                public Song[] newArray(int size) {
-                    return new Song[size];
-                }
-            };
+	@SuppressWarnings("unchecked")
+	public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+		public Song createFromParcel(Parcel in) {
+			return new Song(in);
+		}
 
-    /* for external */
+		public Song[] newArray(int size) {
+			return new Song[size];
+		}
+	};
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = (String) in.readObject();
-        name = (String) in.readObject();
-        artist = (String) in.readObject();
-        art = (String) in.readObject();
-        url = (String) in.readObject();
-        album = (String) in.readObject();
-        time = (String) in.readObject();
-        genre = (String) in.readObject();
-    }
+	@Override
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		id = (String) in.readObject();
+		name = (String) in.readObject();
+		artist = (String) in.readObject();
+		art = (String) in.readObject();
+		url = (String) in.readObject();
+		album = (String) in.readObject();
+		time = (String) in.readObject();
+		genre = (String) in.readObject();
+		extra = (String) in.readObject();
+	}
 
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(id);
-        out.writeObject(name);
-        out.writeObject(artist);
-        out.writeObject(art);
-        out.writeObject(url);
-        out.writeObject(album);
-        out.writeObject(time);
-        out.writeObject(genre);
-    }
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeObject(id);
+		out.writeObject(name);
+		out.writeObject(artist);
+		out.writeObject(art);
+		out.writeObject(url);
+		out.writeObject(album);
+		out.writeObject(time);
+		out.writeObject(genre);
+		out.writeObject(extra);
+	}
 
 }

@@ -1,6 +1,7 @@
 package net.sileht.lullaby.objects;
 
 /* Copyright (c) 2008 Kevin James Purdy <purdyk@onid.orst.edu>
+ *  Copyright (c) 2010 ABAAKOUK Mehdi  <theli48@gmail.com>
  *
  * +------------------------------------------------------------------------+
  * | This program is free software; you can redistribute it and/or          |
@@ -20,64 +21,86 @@ package net.sileht.lullaby.objects;
  * +------------------------------------------------------------------------+
  */
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import android.os.Parcelable;
 import android.os.Parcel;
 
 public class Playlist extends ampacheObject {
-    public String owner = "";
-    public String tracks = "";
-    public String extra = null;
+	public String owner = "";
+	public String tracks = "";
+	public String extra = null;
 
-    public String getType() {
-        return "Playlist";
-    }
-    
-    public String extraString() {
-        if (extra == null) {
-            extra = owner + " - " + tracks;
-        }
-        return extra;
-    }
+	public String getType() {
+		return "Playlist";
+	}
 
-    public boolean hasChildren() {
-        return true;
-    }
-    
-    public String childString() {
-        return "playlist_songs";
-    }
+	public String extraString() {
+		if (extra == null) {
+			extra = owner + " - " + tracks;
+		}
+		return extra;
+	}
 
-    public String[] allChildren() {
-        String[] dir = {"playlist_songs", this.id};
-        return dir;
-    }
+	public boolean hasChildren() {
+		return true;
+	}
 
-    public Playlist() {
-    }
+	public String childString() {
+		return "playlist_songs";
+	}
 
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeString(owner);
-        out.writeString(tracks);
-        out.writeString(extra);
-    }
+	public String[] allChildren() {
+		String[] dir = { "playlist_songs", this.id };
+		return dir;
+	}
 
-    public Playlist(Parcel in) {
-        super.readFromParcel(in);
-        owner = in.readString();
-        tracks = in.readString();
-        extra = in.readString();
-    }
+	public Playlist() {
+	}
 
-    @SuppressWarnings("unchecked")
-	public static final Parcelable.Creator CREATOR
-        = new Parcelable.Creator() {
-                public Playlist createFromParcel(Parcel in) {
-                    return new Playlist(in);
-                }
+	public void writeToParcel(Parcel out, int flags) {
+		super.writeToParcel(out, flags);
+		out.writeString(owner);
+		out.writeString(tracks);
+		out.writeString(extra);
+	}
 
-                public Playlist[] newArray(int size) {
-                    return new Playlist[size];
-                }
-            };
+	public Playlist(Parcel in) {
+		super.readFromParcel(in);
+		owner = in.readString();
+		tracks = in.readString();
+		extra = in.readString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+		public Playlist createFromParcel(Parcel in) {
+			return new Playlist(in);
+		}
+
+		public Playlist[] newArray(int size) {
+			return new Playlist[size];
+		}
+	};
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+        id = (String) in.readObject();
+        name = (String) in.readObject();
+        owner = (String) in.readObject();
+        tracks = (String) in.readObject();
+        extra = (String) in.readObject();		
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject(id);
+        out.writeObject(name);
+        out.writeObject(owner);
+        out.writeObject(tracks);
+        out.writeObject(extra);		
+	}
 }

@@ -172,7 +172,6 @@ public abstract class AmpacheRequest extends Handler {
 			(new File(cacheFilePath)).delete();
 			return false;
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
 			(new File(cacheFilePath)).delete();
 			return false;
 		}

@@ -1,6 +1,7 @@
 package net.sileht.lullaby.objects;
 
 /* Copyright (c) 2008 Kevin James Purdy <purdyk@onid.orst.edu>
+ *  Copyright (c) 2010 ABAAKOUK Mehdi  <theli48@gmail.com>
  *
  * +------------------------------------------------------------------------+
  * | This program is free software; you can redistribute it and/or          |
@@ -19,6 +20,10 @@ package net.sileht.lullaby.objects;
  * | Boston, MA  02111-1307, USA.                                           |
  * +------------------------------------------------------------------------+
  */
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 import android.os.Parcelable;
 import android.os.Parcel;
@@ -75,5 +80,24 @@ public class Artist extends ampacheObject {
                     return new Artist[size];
                 }
             };
+
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+        id = (String) in.readObject();
+        name = (String) in.readObject();
+        albums = in.readInt();
+        tracks = in.readInt();
+		
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject(id);
+        out.writeObject(name);
+        out.writeInt(albums);
+        out.writeInt(tracks);
+	}
 }
 

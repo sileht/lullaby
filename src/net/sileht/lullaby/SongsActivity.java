@@ -34,6 +34,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
+import android.widget.FilterQueryProvider;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SectionIndexer;
@@ -105,8 +107,8 @@ public class SongsActivity extends Activity {
 								song.album).add(song.artist).add(song.url).add(
 								song.time)
 								.add(song.album + " - " + song.artist);
-						songsData.requery();
 					}
+					songsData.requery();
 				}
 			};
 			request.send();
@@ -133,20 +135,44 @@ public class SongsActivity extends Activity {
 	}
 
 	static class SongsAdapter extends SimpleCursorAdapter implements
-			SectionIndexer {
+			SectionIndexer, Filterable {
 
 		private AlphabetIndexer mIndexer;
 		private SongsActivity mCurrentActivity;
+        private Resources mRessource;
+        private Cursor mCursor;
 
 		public SongsAdapter(Context context, SongsActivity activity,
 				Cursor cursor, int layout, String[] from, int[] to) {
 			super(context, layout, cursor, from, to);
 
 			mCurrentActivity = activity;
-			Resources r = context.getResources();
-			mIndexer = new AlphabetIndexer(cursor, cursor
-					.getColumnIndex(ViewUtils.SONG_NAME), r
+			mCursor = cursor;
+			mRessource = context.getResources();
+			mIndexer = new AlphabetIndexer(mCursor, mCursor
+					.getColumnIndex(ViewUtils.SONG_NAME), mRessource
 					.getString(R.string.fast_scroll_numeric_alphabet));
+			
+			setFilterQueryProvider(new FilterQueryProvider() {
+				@Override
+				public Cursor runQuery(CharSequence text) {
+					MatrixCursor nc = new MatrixCursor(ViewUtils.mSongsColumnName);
+					mCursor.moveToFirst();
+					do {
+						if ( mCursor.getString(1).startsWith((String) text)){
+							MatrixCursor.RowBuilder rb = nc.newRow();
+							for (int i = 0; i < mCursor.getColumnCount(); i++){
+								rb = rb.add(mCursor.getString(i));
+							}
+						}
+					} while (mCursor.moveToNext());
+
+					mIndexer = new AlphabetIndexer(nc, nc
+							.getColumnIndex(ViewUtils.SONG_NAME), mRessource
+							.getString(R.string.fast_scroll_numeric_alphabet));
+					return nc;
+				}
+			});
 		}
 
 		@Override

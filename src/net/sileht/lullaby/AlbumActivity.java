@@ -35,6 +35,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
+import android.widget.FilterQueryProvider;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SectionIndexer;
@@ -43,11 +44,10 @@ import android.widget.TextView;
 
 public class AlbumActivity extends Activity{
 
+	static final String TAG = "LullabyAlbumActivity";
+	
 	private MatrixCursor albumsData;
-
-
 	private SimpleCursorAdapter mAdapter;
-
 
 	static class ViewHolder {
 		TextView line1;
@@ -82,8 +82,8 @@ public class AlbumActivity extends Activity{
 					for (Album album : (ArrayList<Album>) list) {
 						albumsData.newRow().add(album.id).add(album.name).add(
 								album.artist).add(album.tracks).add(album.art);
-						albumsData.requery();
 					}
+					albumsData.requery();
 				}
 			};
 			request.send();
@@ -98,20 +98,43 @@ public class AlbumActivity extends Activity{
 		private final StringBuilder mBuffer = new StringBuilder();
 		
         private AlphabetIndexer mIndexer;
+        private Resources mRessource;
+        private Cursor mCursor;
         
 		public AlbumsAdapter(Context context, Cursor cursor) {
 			super(context, R.layout.track_list_item_child, cursor,new String[] {}, new int[] {});
-
-			Resources r = context.getResources();
-			mDefaultAlbumIcon = (BitmapDrawable) r
+			
+			mCursor = cursor;
+			mRessource = context.getResources();
+			mDefaultAlbumIcon = (BitmapDrawable) mRessource
 					.getDrawable(R.drawable.albumart_mp_unknown_list);
 			// no filter or dither, it's a lot faster and we can't tell the
 			// difference
 			mDefaultAlbumIcon.setFilterBitmap(false);
 			mDefaultAlbumIcon.setDither(false);
 
-			mIndexer = new AlphabetIndexer(cursor, cursor.getColumnIndex(ViewUtils.ALBUM_NAME), 
-                    r.getString(R.string.fast_scroll_numeric_alphabet));
+			mIndexer = new AlphabetIndexer(mCursor, mCursor.getColumnIndex(ViewUtils.ALBUM_NAME), 
+					mRessource.getString(R.string.fast_scroll_numeric_alphabet));
+			
+			setFilterQueryProvider(new FilterQueryProvider() {
+				@Override
+				public Cursor runQuery(CharSequence text) {
+					MatrixCursor nc = new MatrixCursor(ViewUtils.mAlbumsColumnName);
+					mCursor.moveToFirst();
+					do {
+						if ( mCursor.getString(1).startsWith((String) text)){
+							MatrixCursor.RowBuilder rb = nc.newRow();
+							for (int i = 0; i < mCursor.getColumnCount(); i++){
+								rb = rb.add(mCursor.getString(i));
+							}
+						}
+					} while (mCursor.moveToNext());
+
+					mIndexer = new AlphabetIndexer(nc, nc.getColumnIndex(ViewUtils.ALBUM_NAME), 
+							mRessource.getString(R.string.fast_scroll_numeric_alphabet));
+					return nc;
+				}
+			});
 		}
 
 		@Override

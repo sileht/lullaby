@@ -20,6 +20,8 @@ package net.sileht.lullaby;
  * +------------------------------------------------------------------------+
  */
 
+import java.io.File;
+
 import net.sileht.lullaby.R;
 import net.sileht.lullaby.backend.Player;
 import net.sileht.lullaby.objects.Song;
@@ -29,6 +31,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -287,12 +290,13 @@ public class MainActivity extends ActivityGroup {
 	}
 
 	private static final int MENU_SETTINGS = 0;
-	private static final int MENU_CLEAR = 1;
-	private static final int MENU_SAVE = 2;
-	private static final int MENU_LOAD = 3;
-	private static final int MENU_EXIT = 4;
-	private static final int MENU_SHUFFLE = 5;
-	private static final int MENU_REPEAT = 6;
+	private static final int MENU_CLEAR = MENU_SETTINGS + 1;
+	private static final int MENU_SAVE = MENU_CLEAR + 1;
+	private static final int MENU_LOAD = MENU_SAVE + 1;
+	private static final int MENU_EXIT = MENU_LOAD + 1;
+	private static final int MENU_SHUFFLE = MENU_EXIT + 1;
+	private static final int MENU_REPEAT = MENU_SHUFFLE + 1 ;
+	private static final int MENU_CLEARCACHE = MENU_REPEAT + 1 ;
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -313,6 +317,9 @@ public class MainActivity extends ActivityGroup {
 
 		menu.add(0, MENU_SETTINGS, 0, "Settings").setIcon(
 				android.R.drawable.ic_menu_preferences);
+		
+		menu.add(0, MENU_CLEARCACHE, 0, "Clear cache").setIcon(
+				android.R.drawable.ic_menu_close_clear_cancel);
 
 		menu.add(0, MENU_EXIT, 0, "Exit").setIcon(
 				android.R.drawable.ic_menu_close_clear_cancel);
@@ -347,6 +354,10 @@ public class MainActivity extends ActivityGroup {
 			break;
 		case MENU_LOAD:
 			Lullaby.pl.load(this);
+			break;
+		case MENU_CLEARCACHE:
+			(new File(Environment.getExternalStorageDirectory(),
+					"Android/data/com.sileht.lullaby/cache")).delete();
 			break;
 		case MENU_EXIT:
 			finish();

@@ -20,11 +20,20 @@ package net.sileht.lullaby.objects;
  * +------------------------------------------------------------------------+
  */
 
+import java.io.Serializable;
+
 import android.os.Parcelable; 
 import android.os.Parcel;
 
-public abstract class ampacheObject implements Parcelable {
-    public String id = "";
+public abstract class ampacheObject implements Parcelable, Serializable{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	
+	public String id = "";
     public String name = "";
     
     public String getId() {

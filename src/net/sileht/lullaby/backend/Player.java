@@ -62,7 +62,6 @@ public class Player {
 
 	private ArrayList<PlayerListener> mPlayerListeners;
 
-	private NotificationManager mNM;
 	private Notification mNotification;
 	private NotificationManager mNotificationManager;
 
@@ -93,18 +92,22 @@ public class Player {
 		mPlayer.setOnCompletionListener(mMediaPlayerListener);
 		mPlayer.setOnBufferingUpdateListener(mMediaPlayerListener);
 
-		mNotification = new Notification(R.drawable.icon, mContext
-				.getString(R.string.app_name), System.currentTimeMillis());
-		mNotification.flags &= Notification.FLAG_NO_CLEAR; 
+
 		
 		mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+		mNotification = new Notification(R.drawable.icon, mContext
+				.getString(R.string.app_name), System.currentTimeMillis());
+		mNotification.flags |= Notification.FLAG_ONGOING_EVENT; 
+		
 		
 		setState(STATE.Idle);
 	}
 	
 	public void showNotification() {
-		updateNotification("Nop", "Nop");
-		mNotificationManager.notify(1, mNotification);
+		if (mState.equals(STATE.Started)){
+			mNotificationManager.notify(1, mNotification);
+		}
 	}
 
 	public void updateNotification(CharSequence title, CharSequence text) {
@@ -112,14 +115,11 @@ public class Player {
 		PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0,
 				notificationIntent, 0);
 		mNotification.setLatestEventInfo(mContext, title, text, contentIntent);
-		mNotificationManager.notify(1, mNotification);
+		showNotification();
 	}
 	
 	public void hideNotification() {
-		Intent notificationIntent = new Intent(mContext, MainActivity.class);
-		PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0,
-				notificationIntent, 0);
-		mNotification.setLatestEventInfo(mContext, "", "", contentIntent);
+		mNotificationManager.cancel(1);
 	}
 
 	private void setState(STATE state) {
@@ -257,7 +257,7 @@ public class Player {
 	}
 
 	public void quit() {
-		mNM.cancel(1);
+		hideNotification();
 		TelephonyManager tmgr = (TelephonyManager) mContext
 				.getSystemService(Context.TELEPHONY_SERVICE);
 		tmgr.listen(mPhoneStateListener, 0);
@@ -301,6 +301,7 @@ public class Player {
 				mPlayer.stop();
 				mPlayer.reset();
 				setState(STATE.Stopped);
+				hideNotification();
 			}
 		}
 

@@ -19,22 +19,22 @@ package net.sileht.lullaby;
  * | Boston, MA  02111-1307, USA.                                           |
  * +------------------------------------------------------------------------+
  */
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import net.sileht.lullaby.R;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -47,10 +47,10 @@ public abstract class AmpacheRequest extends Handler {
 	protected int mMax;
 	protected boolean mQuick;
 
+	private ArrayList<Object> mCachedData;
+
 	private static boolean mExternalStorageAvailable = false;
 	private static boolean mExternalStorageWriteable = false;
-
-	private String mFilePrefix = "lullabycache";
 
 	private boolean stop = false;
 
@@ -61,67 +61,33 @@ public abstract class AmpacheRequest extends Handler {
 	}
 
 	public AmpacheRequest(Activity activity, String[] directive, Boolean quick) {
+		this(activity, directive, quick, true);
+	}
+
+	public AmpacheRequest(Activity activity, String[] directive, Boolean quick,
+			boolean useCache) {
 		super();
 		mCurrentActivity = activity;
 		mDirective = directive;
 		mQuick = quick;
+		mCachedData = new ArrayList<Object>();
 	}
 
 	public void stop() {
 		stop = true;
 	}
 
-	public boolean isCached() {
-		checkStorage();
-		if (!mExternalStorageAvailable) {
-			return false;
+	private String getCacheFilePath() {
+		String filename = mDirective[0];
+		if (!mDirective[1].equals("")) {
+			filename += "-" + mDirective[1];
 		}
-		return false;
+		File f = new File(Environment.getExternalStorageDirectory(),
+				"Android/data/com.sileht.lullaby/cache");
+		f.mkdirs();
+		return f.getPath() + "/"  + filename;
 	}
-
-	private byte[] readObjs() {
-		FileInputStream fis;
-		byte[] b = null;
-
-		try {
-			fis = mCurrentActivity.openFileInput(mFilePrefix);
-			fis.read(b);
-			fis.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return null;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-		return b;
-
-	}
-
-	private boolean writeObjs(byte[] b) {
-		if (mCurrentActivity == null) {
-			return false;
-		}
-		FileOutputStream fos;
-		try {
-			fos = mCurrentActivity.openFileOutput(mFilePrefix,
-					Context.MODE_PRIVATE);
-			fos.write(b);
-			fos.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return false;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
-		return true;
-	}
-
-	private boolean closeCache() {
-		return writeObjs("CLOSEDCACHE".getBytes());
-	}
-
+	
 	static private void checkStorage() {
 		String state = Environment.getExternalStorageState();
 
@@ -140,11 +106,84 @@ public abstract class AmpacheRequest extends Handler {
 		}
 	}
 
+	private boolean writeCache() {
+		
+		checkStorage();
+		if (!mExternalStorageWriteable) {
+			return false;
+		}
+		
+		Log.d(TAG, "Writing cache start...");
+
+		String cacheFilePath = getCacheFilePath();
+
+		FileOutputStream fos;
+		try {
+			fos = new FileOutputStream(cacheFilePath);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		Log.d(TAG, "Writing cache...");
+		try {
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(mCachedData);
+			oos.close();
+			fos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			(new File(cacheFilePath)).delete();
+			return false;
+		}
+		Log.d(TAG, "Writing cache done");
+		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	private boolean readCache() {
+
+		checkStorage();
+		if (!mExternalStorageAvailable) {
+			return false;
+		}
+
+		Log.d(TAG, "Reading cache start...");
+		
+		mCachedData = new ArrayList<Object>();
+		String cacheFilePath = getCacheFilePath();
+		FileInputStream fis;
+
+		try {
+			fis = new FileInputStream(cacheFilePath);
+		} catch (FileNotFoundException e) {
+			Log.d(TAG, "Reading cache not exists.");
+			return false;
+		}
+		
+		Log.d(TAG, "Reading cache...");
+		try {
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			mCachedData = (ArrayList<Object>) ois.readObject();
+			ois.close();
+			fis.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			(new File(cacheFilePath)).delete();
+			return false;
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			(new File(cacheFilePath)).delete();
+			return false;
+		}
+		Log.d(TAG, "Reading cache done.");
+		return true;
+	}
+
 	public void send() {
-		if (isCached()) {
-
+		if (readCache()) {
+			add_objects(mCachedData);
 		} else {
-
 			Message requestMsg = new Message();
 			requestMsg.what = 1;
 			requestMsg.arg1 = 0;
@@ -161,18 +200,7 @@ public abstract class AmpacheRequest extends Handler {
 		}
 	}
 
-	private void cache_and_add_objects(ArrayList<Parcelable> list) {
-		add_objects(list);
-		for (Parcelable elem : list) {
-			Parcel p = null;
-			elem.writeToParcel(p, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-			if (p != null) {
-				writeObjs(p.createByteArray());
-			}
-		}
-	}
-
-	public abstract void add_objects(ArrayList<Parcelable> list);
+	public abstract void add_objects(ArrayList<?> list);
 
 	private void hideProgress() {
 		if (mCurrentActivity != null) {
@@ -190,15 +218,17 @@ public abstract class AmpacheRequest extends Handler {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public void handleMessage(Message msg) {
 		if (stop)
 			return;
 		switch (msg.what) {
 		case 1:
-			cache_and_add_objects((ArrayList<Parcelable>) msg.obj);
+			mCachedData.addAll((ArrayList<Object>) msg.obj);
+			add_objects((ArrayList<?>) msg.obj);
 
 			/* queue up the next inc */
-			if (((ArrayList<?>) msg.obj).size() >= 100) {
+			if (((ArrayList<Object>) msg.obj).size() >= 100) {
 				Message requestMsg = new Message();
 				requestMsg.obj = mDirective;
 				requestMsg.what = 1;
@@ -208,7 +238,7 @@ public abstract class AmpacheRequest extends Handler {
 
 				showProgress();
 			} else {
-				closeCache();
+				writeCache();
 				hideProgress();
 			}
 			break;

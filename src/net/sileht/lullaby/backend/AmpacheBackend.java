@@ -221,7 +221,7 @@ public class AmpacheBackend extends HandlerThread {
 			}
 
 			private AmpacheHandler makeRequest(String url, String action) {
-				Log.d(TAG, "Ampache connector try open " + url);
+				//Log.d(TAG, "Ampache connector try open " + url);
 				AmpacheHandler hand = getHandlerFor(action);
 				/* now we fetch */
 				InputSource dataIn = null;
@@ -249,7 +249,7 @@ public class AmpacheBackend extends HandlerThread {
 			}
 
 			private Boolean makeAuthentification() {
-				Log.d(TAG, "Ampache handshake request.");
+				//Log.d(TAG, "Ampache handshake request.");
 
 				authToken = "";
 				String url = getUrlFor("handshake", "", 0);
@@ -268,7 +268,7 @@ public class AmpacheBackend extends HandlerThread {
 				} else {
 					hasAlreadyTryHandshake = true;
 					authToken = ((AmpacheAuthParser) hand).token;
-					Log.d(TAG, "Ampache connected.");
+					//Log.d(TAG, "Ampache connected.");
 
 					mTimerTask = new TimerTask() {
 						@Override
@@ -287,7 +287,7 @@ public class AmpacheBackend extends HandlerThread {
 
 				if (!isConfigured()) {
 					authToken = "";
-					Log.v(TAG, "Backend not configured, retrying in 1s.");
+					//Log.v(TAG, "Backend not configured, retrying in 1s.");
 					Message msgreply = Message.obtain(msg);
 					msgreply.what = 100;
 					this.waitAndsend(msgreply);
@@ -301,7 +301,7 @@ public class AmpacheBackend extends HandlerThread {
 				String filter = directive[1];
 				int offset = msg.arg1;
 
-				Log.d(TAG, "Backend handle new message: " + action);
+				//Log.d(TAG, "Backend handle new message: " + action);
 
 				if (authToken.equals("")) {
 					if (!makeAuthentification()) {
@@ -331,8 +331,7 @@ public class AmpacheBackend extends HandlerThread {
 						reply.obj = hand.error;
 					}
 				} else {
-					Log.d(TAG, "Reply to message object size: "
-							+ hand.data.size());
+					//Log.d(TAG, "Reply to message object size: " + hand.data.size());
 
 					reply.what = msg.what;
 					reply.obj = hand.data;

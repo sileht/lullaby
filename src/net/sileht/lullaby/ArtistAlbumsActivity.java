@@ -33,11 +33,13 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.text.Editable;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
 import android.widget.ExpandableListView;
+import android.widget.FilterQueryProvider;
 import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.SimpleCursorTreeAdapter;
@@ -83,6 +85,8 @@ public class ArtistAlbumsActivity extends Activity {
 			albumsData = new HashMap<String, MatrixCursor>();
 			startManagingCursor(artistsData);
 
+			mAdapter = getNewAdapter();
+
 			AmpacheRequest request = new AmpacheRequest((Activity) this,
 					new String[] { "artists", "" }) {
 				@SuppressWarnings("unchecked")
@@ -91,19 +95,25 @@ public class ArtistAlbumsActivity extends Activity {
 					for (Artist artist : (ArrayList<Artist>) list) {
 						artistsData.newRow().add(artist.id).add(artist.name)
 								.add(artist.albums).add(artist.tracks);
-						artistsData.requery();
 					}
+					artistsData.requery();
 				}
 			};
 			request.send();
+		} else {
+			mAdapter = getNewAdapter();
 		}
-		mAdapter = getNewAdapter();
 		mListView.setAdapter(mAdapter);
 
 	}
 
+	public void afterTextChanged(Editable s) {
+
+	}
+
 	private class AlbumClickListener implements
-			ExpandableListView.OnChildClickListener, ExpandableListView.OnGroupExpandListener {
+			ExpandableListView.OnChildClickListener,
+			ExpandableListView.OnGroupExpandListener {
 		@Override
 		public boolean onChildClick(ExpandableListView l, View v,
 				int gposition, int cposition, long id) {
@@ -144,6 +154,8 @@ public class ArtistAlbumsActivity extends Activity {
 		private final ArtistAlbumsActivity mCurrentActivity;
 
 		private AlphabetIndexer mIndexer;
+        private Resources mRessource;
+        private Cursor mCursor;
 
 		public ArtistAlbumsAdapter(Context context,
 				ArtistAlbumsActivity currentactivity, Cursor cursor,
@@ -152,18 +164,39 @@ public class ArtistAlbumsActivity extends Activity {
 
 			super(context, cursor, glayout, gfrom, gto, clayout, cfrom, cto);
 
-			Resources r = context.getResources();
+			mCursor = cursor;
+			mRessource = context.getResources();
 			mCurrentActivity = currentactivity;
-			mDefaultAlbumIcon = (BitmapDrawable) r
+			mDefaultAlbumIcon = (BitmapDrawable) mRessource
 					.getDrawable(R.drawable.albumart_mp_unknown_list);
 			// no filter or dither, it's a lot faster and we can't tell the
 			// difference
 			mDefaultAlbumIcon.setFilterBitmap(false);
 			mDefaultAlbumIcon.setDither(false);
 
-			mIndexer = new AlphabetIndexer(cursor, cursor
-					.getColumnIndex(ViewUtils.ARTIST_NAME), r
+			mIndexer = new AlphabetIndexer(mCursor, mCursor
+					.getColumnIndex(ViewUtils.ARTIST_NAME), mRessource
 					.getString(R.string.fast_scroll_numeric_alphabet));
+			
+			setFilterQueryProvider(new FilterQueryProvider() {
+				@Override
+				public Cursor runQuery(CharSequence text) {
+					MatrixCursor nc = new MatrixCursor(ViewUtils.mArtistColumnName);
+					mCursor.moveToFirst();
+					do {
+						if ( mCursor.getString(1).startsWith((String) text)){
+							MatrixCursor.RowBuilder rb = nc.newRow();
+							for (int i = 0; i < mCursor.getColumnCount(); i++){
+								rb = rb.add(mCursor.getString(i));
+							}
+						}
+					} while (mCursor.moveToNext());
+
+					mIndexer = new AlphabetIndexer(nc, nc.getColumnIndex(ViewUtils.ARTIST_NAME), 
+							mRessource.getString(R.string.fast_scroll_numeric_alphabet));
+					return nc;
+				}
+			});
 		}
 
 		@Override

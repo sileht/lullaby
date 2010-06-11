@@ -40,7 +40,7 @@ public final class Lullaby extends Application {
 		try {
 			comm = new AmpacheBackend(this);
 		} catch (Exception poo) {
-			System.out.println("Fuck");
+			System.out.println("Failed launch Backend....");
 		}
 	}
 

@@ -33,6 +33,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
+import android.widget.FilterQueryProvider;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SectionIndexer;
@@ -68,9 +70,12 @@ public class PlaylistsActivity extends Activity {
 				@Override
 				public void add_objects(ArrayList list) {
 					for (Playlist playlist : (ArrayList<Playlist>) list) {
-						playlistsData.newRow().add(playlist.id).add(playlist.name).add(playlist.tracks).add(playlist.owner);
-						playlistsData.requery();
+						playlistsData.newRow().add(playlist.id).add(
+								playlist.name).add(playlist.tracks).add(
+								playlist.owner);
+
 					}
+					playlistsData.requery();
 				}
 			};
 			request.send();
@@ -79,18 +84,47 @@ public class PlaylistsActivity extends Activity {
 		lv.setAdapter(mAdapter);
 
 	}
-	static class PlaylistsAdapter extends SimpleCursorAdapter  implements SectionIndexer{
 
-        private AlphabetIndexer mIndexer;
+	static class PlaylistsAdapter extends SimpleCursorAdapter implements
+			SectionIndexer, Filterable {
+
+		private AlphabetIndexer mIndexer;
 		private final StringBuilder mBuffer = new StringBuilder();
-        
-		public PlaylistsAdapter(Context context, Cursor cursor) {
-			super(context, R.layout.track_list_item_mini, cursor,new String[] {}, new int[] {});
+        private Resources mRessource;
+        private Cursor mCursor;
 
-			Resources r = context.getResources();
-			mIndexer = new AlphabetIndexer(cursor, cursor.getColumnIndex(ViewUtils.PLAYLIST_NAME), 
-                    r.getString(R.string.fast_scroll_numeric_alphabet));
+		public PlaylistsAdapter(Context context, Cursor cursor) {
+			super(context, R.layout.track_list_item_mini, cursor,
+					new String[] {}, new int[] {});
+
+			mCursor = cursor;
+			mRessource = context.getResources();
+			mIndexer = new AlphabetIndexer(mCursor, mCursor
+					.getColumnIndex(ViewUtils.PLAYLIST_NAME), mRessource
+					.getString(R.string.fast_scroll_numeric_alphabet));
+			
+			setFilterQueryProvider(new FilterQueryProvider() {
+				@Override
+				public Cursor runQuery(CharSequence text) {
+					MatrixCursor nc = new MatrixCursor(ViewUtils.mPlaylistsColumnName);
+					mCursor.moveToFirst();
+					do {
+						if ( mCursor.getString(1).startsWith((String) text)){
+							MatrixCursor.RowBuilder rb = nc.newRow();
+							for (int i = 0; i < mCursor.getColumnCount(); i++){
+								rb = rb.add(mCursor.getString(i));
+							}
+						}
+					} while (mCursor.moveToNext());
+
+					mIndexer = new AlphabetIndexer(nc, nc
+							.getColumnIndex(ViewUtils.PLAYLIST_NAME), mRessource
+							.getString(R.string.fast_scroll_numeric_alphabet));
+					return nc;
+				}
+			});
 		}
+
 		@Override
 		public View newView(Context context, Cursor cursor, ViewGroup parent) {
 			View v = super.newView(context, cursor, parent);
@@ -112,7 +146,7 @@ public class PlaylistsActivity extends Activity {
 
 			int numsongs = cursor.getInt(cursor
 					.getColumnIndexOrThrow(ViewUtils.PLAYLIST_TRACKS));
-			
+
 			String owner = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.PLAYLIST_OWNER));
 
@@ -124,7 +158,6 @@ public class PlaylistsActivity extends Activity {
 
 			ViewHolder vh = (ViewHolder) view.getTag();
 			vh.line1.setText(displayname);
-			
 
 			final StringBuilder builder = mBuffer;
 			builder.delete(0, builder.length());
@@ -136,26 +169,27 @@ public class PlaylistsActivity extends Activity {
 			}
 
 			vh.line2.setText(owner + " - " + builder.toString());
-			
+
 			vh.icon.setImageDrawable(null);
 			vh.play_indicator.setImageDrawable(null);
 			vh.duration.setVisibility(View.GONE);
 
 		}
-		@Override
-        public Object[] getSections() {
-            return mIndexer.getSections();
-        }
 
 		@Override
-        public int getPositionForSection(int sectionIndex) {
-            return mIndexer.getPositionForSection(sectionIndex);
-        }
+		public Object[] getSections() {
+			return mIndexer.getSections();
+		}
 
 		@Override
-        public int getSectionForPosition(int position) {
-            return 0;
-        }
-		
+		public int getPositionForSection(int sectionIndex) {
+			return mIndexer.getPositionForSection(sectionIndex);
+		}
+
+		@Override
+		public int getSectionForPosition(int position) {
+			return 0;
+		}
+
 	}
 }

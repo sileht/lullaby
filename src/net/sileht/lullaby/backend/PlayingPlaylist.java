@@ -26,7 +26,6 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import net.sileht.lullaby.Lullaby;
 import net.sileht.lullaby.AmpacheRequest;
 import net.sileht.lullaby.objects.Song;
 
@@ -44,9 +43,16 @@ public class PlayingPlaylist {
 	private boolean mRepeat = false;
 
 	private BaseAdapter mAdapter;
+	
+	private Player mPlayer;
 
 	private static final String TAG = "DroidZikPlayingPlaylist";
 
+	
+	public PlayingPlaylist(Player player){
+		mPlayer = player;
+	}
+	
 	public boolean toggleRepeat() {
 		mRepeat = !mRepeat;
 		return mRepeat;
@@ -103,6 +109,7 @@ public class PlayingPlaylist {
 
 	public void setAdapter(BaseAdapter adapter) {
 		mAdapter = adapter;
+		mAdapter.notifyDataSetChanged();
 	}
 
 	private void updateAdapter() {
@@ -113,14 +120,14 @@ public class PlayingPlaylist {
 
 	public void play(int position) {
 		mCurrentPlayingPosition = position - 1;
-		Lullaby.mp.playSong(getNextSong());
+		mPlayer.playSong(getNextSong());
 	}
 
 
 	public Song playNext() {
 		Song song = getNextSong();
 		if (song != null) {
-			Lullaby.mp.playSong(song);
+			mPlayer.playSong(song);
 		}
 		return song;
 	}
@@ -128,7 +135,7 @@ public class PlayingPlaylist {
 	public Song playPrevious() {
 		Song song = getPreviousSong();
 		if (song != null) {
-			Lullaby.mp.playSong(song);
+			mPlayer.playSong(song);
 		}
 		return song;
 	}
@@ -207,7 +214,7 @@ public class PlayingPlaylist {
 
 		updateAdapter();
 		if (startplaying) {
-			Lullaby.mp.playSong(getNextSong());
+			mPlayer.playSong(getNextSong());
 		}
 	}
 

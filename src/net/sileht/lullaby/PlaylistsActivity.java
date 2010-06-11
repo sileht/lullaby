@@ -34,7 +34,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
 import android.widget.FilterQueryProvider;
-import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SectionIndexer;
@@ -45,16 +44,17 @@ public class PlaylistsActivity extends Activity {
 	private MatrixCursor playlistsData;
 
 	private SimpleCursorAdapter mAdapter;
+	ViewUtils mViewUtils;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.list_classic);
 		ListView lv = (ListView) findViewById(R.id.list);
-		ViewUtils e = new ViewUtils(this);
-		lv.setOnItemClickListener(e);
-		lv.setOnItemLongClickListener(e);
-		lv.setOnCreateContextMenuListener(e);
+		mViewUtils= new ViewUtils(this);
+		lv.setOnItemClickListener(mViewUtils);
+		lv.setOnItemLongClickListener(mViewUtils);
+		lv.setOnCreateContextMenuListener(mViewUtils);
 
 		if (playlistsData == null) {
 			// Tell them we're loading
@@ -85,8 +85,13 @@ public class PlaylistsActivity extends Activity {
 
 	}
 
+	protected void onStop(){
+		mViewUtils.onStop();
+		super.onStop();
+	}
+
 	static class PlaylistsAdapter extends SimpleCursorAdapter implements
-			SectionIndexer, Filterable {
+			SectionIndexer {
 
 		private AlphabetIndexer mIndexer;
 		private final StringBuilder mBuffer = new StringBuilder();

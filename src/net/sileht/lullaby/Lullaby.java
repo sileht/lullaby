@@ -20,21 +20,15 @@ package net.sileht.lullaby;
 */
 import net.sileht.lullaby.backend.AmpacheBackend;
 import net.sileht.lullaby.backend.ArtworkBackend;
-import net.sileht.lullaby.backend.Player;
-import net.sileht.lullaby.backend.PlayingPlaylist;
 import android.app.Application;
 
 public final class Lullaby extends Application {
 
 	public static AmpacheBackend comm;
 
-	public static Player mp;
-	public static PlayingPlaylist pl;
 	public static ArtworkBackend cover;
 
 	public void onCreate() {
-		mp = new Player(this);
-		pl = new PlayingPlaylist();
 		cover = new ArtworkBackend();
 
 		try {
@@ -42,9 +36,6 @@ public final class Lullaby extends Application {
 		} catch (Exception poo) {
 			System.out.println("Failed launch Backend....");
 		}
-	}
-
-	public void onDestroy() {
-		mp.quit();
+		
 	}
 }

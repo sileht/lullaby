@@ -1,26 +1,33 @@
 package net.sileht.lullaby;
+
 /* Copyright (c) 20010 ABAAKOUK Mehdi  <theli48@gmail.com>
-*
-* +------------------------------------------------------------------------+
-* | This program is free software; you can redistribute it and/or          |
-* | modify it under the terms of the GNU General Public License            |
-* | as published by the Free Software Foundation; either version 2         |
-* | of the License, or (at your option) any later version.                 |
-* |                                                                        |
-* | This program is distributed in the hope that it will be useful,        |
-* | but WITHOUT ANY WARRANTY; without even the implied warranty of         |
-* | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          |
-* | GNU General Public License for more details.                           |
-* |                                                                        |
-* | You should have received a copy of the GNU General Public License      |
-* | along with this program; if not, write to the Free Software            |
-* | Foundation, Inc., 59 Temple Place - Suite 330,                         |
-* | Boston, MA  02111-1307, USA.                                           |
-* +------------------------------------------------------------------------+
-*/
+ *
+ * +------------------------------------------------------------------------+
+ * | This program is free software; you can redistribute it and/or          |
+ * | modify it under the terms of the GNU General Public License            |
+ * | as published by the Free Software Foundation; either version 2         |
+ * | of the License, or (at your option) any later version.                 |
+ * |                                                                        |
+ * | This program is distributed in the hope that it will be useful,        |
+ * | but WITHOUT ANY WARRANTY; without even the implied warranty of         |
+ * | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          |
+ * | GNU General Public License for more details.                           |
+ * |                                                                        |
+ * | You should have received a copy of the GNU General Public License      |
+ * | along with this program; if not, write to the Free Software            |
+ * | Foundation, Inc., 59 Temple Place - Suite 330,                         |
+ * | Boston, MA  02111-1307, USA.                                           |
+ * +------------------------------------------------------------------------+
+ */
+import net.sileht.lullaby.backend.Player;
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.database.Cursor;
+import android.os.IBinder;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -32,6 +39,9 @@ import android.widget.AdapterView.OnItemLongClickListener;
 
 public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 		OnCreateContextMenuListener {
+
+	private static final String TAG = "LullabyViewUtils";
+
 	public static final String ARTIST_ID = "_id";
 	public static final String ARTIST_NAME = "ARTIST_NAME";
 	public static final String ARTIST_ALBUMS = "ARTIST_ALBUMS";
@@ -55,7 +65,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 	public static final String PLAYLIST_NAME = "PLAYLIST_NAME";
 	public static final String PLAYLIST_TRACKS = "PLAYLIST_TRACKS";
 	public static final String PLAYLIST_OWNER = "PLAYLIST_OWNER";
-	
+
 	public static final String[] mArtistColumnName = new String[] { ARTIST_ID,
 			ARTIST_NAME, ARTIST_ALBUMS, ARTIST_TRACKS };
 
@@ -65,14 +75,32 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 	public static final String[] mSongsColumnName = new String[] { SONG_ID,
 			SONG_NAME, SONG_ALBUM, SONG_ARTIST, SONG_URL, SONG_DURATION,
 			SONG_EXTRA };
-	
-	public static final String[] mPlaylistsColumnName = new String[] { PLAYLIST_ID,
-		PLAYLIST_NAME, PLAYLIST_TRACKS, PLAYLIST_OWNER};
+
+	public static final String[] mPlaylistsColumnName = new String[] {
+			PLAYLIST_ID, PLAYLIST_NAME, PLAYLIST_TRACKS, PLAYLIST_OWNER };
 
 	private Activity mCurrentActivity;
 
+	// Bind Service Player
+	private Player mPlayer;
+	private ServiceConnection mPlayerConnection = new ServiceConnection() {
+
+		@Override
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			mPlayer = ((Player.PlayerBinder) service).getService();
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName className) {
+			mPlayer = null;
+		}
+	};
+
 	public ViewUtils(Activity activity) {
 		mCurrentActivity = activity;
+		activity.startService(new Intent(mCurrentActivity, Player.class));
+		activity.bindService(new Intent(mCurrentActivity, Player.class),
+				mPlayerConnection, Context.BIND_AUTO_CREATE);
 	}
 
 	public void startSongsActivity(String type, String id, String title) {
@@ -86,6 +114,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 
 	@Override
 	public void onItemClick(AdapterView<?> l, View v, int position, long id) {
+
 		Cursor cursor = (Cursor) l.getItemAtPosition(position);
 		if (cursor.getColumnName(1) == ARTIST_NAME) {
 
@@ -93,7 +122,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 					.getColumnIndexOrThrow(ARTIST_ID));
 			String artist = cursor.getString(cursor
 					.getColumnIndexOrThrow(ARTIST_NAME));
-			
+
 			startSongsActivity("artist_songs", artistId, artist);
 
 		} else if (cursor.getColumnName(1) == ALBUM_NAME) {
@@ -105,8 +134,8 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			String artist = cursor.getString(cursor
 					.getColumnIndexOrThrow(ALBUM_ARTIST));
 
-			startSongsActivity("album_songs", albumId, album+" - "+artist);
-			
+			startSongsActivity("album_songs", albumId, album + " - " + artist);
+
 		} else if (cursor.getColumnName(1) == PLAYLIST_NAME) {
 
 			String playlistId = cursor.getString(cursor
@@ -116,15 +145,20 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			String author = cursor.getString(cursor
 					.getColumnIndexOrThrow(PLAYLIST_OWNER));
 
-			startSongsActivity("playlist_songs", playlistId, playlist + " - " + author);
+			startSongsActivity("playlist_songs", playlistId, playlist + " - "
+					+ author);
 
 		} else if (cursor.getColumnName(1) == SONG_NAME) {
 
 			String songId = cursor.getString(cursor
 					.getColumnIndexOrThrow(SONG_ID));
 
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] { "song",
-					songId });
+			if (mPlayer != null) {
+				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
+						"song", songId });
+			} else {
+				Log.w(TAG, "Player not started!?");
+			}
 		}
 	}
 
@@ -141,12 +175,15 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			int tracks = cursor.getInt(cursor
 					.getColumnIndexOrThrow(ARTIST_TRACKS));
 
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] {
-					"artist_songs", artistId });
-
-			Toast.makeText(mCurrentActivity,
-					"Enqueue " + artist + ": " + tracks + " songs",
-					Toast.LENGTH_LONG).show();
+			if (mPlayer != null) {
+				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
+						"artist_songs", artistId });
+				Toast.makeText(mCurrentActivity,
+						"Enqueue " + artist + ": " + tracks + " songs",
+						Toast.LENGTH_LONG).show();
+			} else {
+				Log.w(TAG, "Player not started!?");
+			}
 
 		} else if (cursor.getColumnName(1) == ALBUM_NAME) {
 
@@ -157,12 +194,15 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			int tracks = cursor.getInt(cursor
 					.getColumnIndexOrThrow(ALBUM_TRACKS));
 
-			Toast.makeText(mCurrentActivity,
-					"Enqueue " + album + ": " + tracks + " songs",
-					Toast.LENGTH_LONG).show();
-
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] {
-					"album_songs", albumId });
+			if (mPlayer != null) {
+				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
+						"album_songs", albumId });
+				Toast.makeText(mCurrentActivity,
+						"Enqueue " + album + ": " + tracks + " songs",
+						Toast.LENGTH_LONG).show();
+			} else {
+				Log.w(TAG, "Player not started!?");
+			}
 
 		} else if (cursor.getColumnName(1) == SONG_NAME) {
 
@@ -173,12 +213,15 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			String artist = cursor.getString(cursor
 					.getColumnIndexOrThrow(SONG_ARTIST));
 
-			Toast.makeText(mCurrentActivity,
-					"Enqueue " + song + " - " + artist, Toast.LENGTH_LONG)
-					.show();
-
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] { "song",
-					songId });
+			if (mPlayer != null) {
+				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
+						"song", songId });
+				Toast.makeText(mCurrentActivity,
+						"Enqueue " + song + " - " + artist, Toast.LENGTH_LONG)
+						.show();
+			} else {
+				Log.w(TAG, "Player not started!?");
+			}
 
 		} else if (cursor.getColumnName(1) == PLAYLIST_NAME) {
 
@@ -189,13 +232,16 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			int tracks = cursor.getInt(cursor
 					.getColumnIndexOrThrow(PLAYLIST_TRACKS));
 
-			Toast.makeText(mCurrentActivity,
-					"Enqueue " + playlistName + ": " + tracks + " songs",
-					Toast.LENGTH_LONG).show();
-
-			Lullaby.pl.appendSongs(mCurrentActivity, new String[] {
-					"playlist_songs", playlistId });
-
+			if (mPlayer != null) {
+				mPlayer.mPlaylist.appendSongs(mCurrentActivity, new String[] {
+						"playlist_songs", playlistId });
+				Toast.makeText(mCurrentActivity,
+						"Enqueue " + playlistName + ": " + tracks + " songs",
+						Toast.LENGTH_LONG).show();
+			} else {
+				Log.w(TAG, "Player not started!?");
+			}
+			
 		}
 		return true;
 	}
@@ -203,13 +249,20 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 	private final static int MENU_PLAY = 0;
 	private final static int MENU_ENQUEUE = 1;
 	private final static int MENU_ENQUEUE_PLAY = 2;
-	
+
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuinfo) {
-		menu.add(0, MENU_PLAY, 0, "Play").setIcon(android.R.drawable.ic_media_play);
-		menu.add(0, MENU_ENQUEUE, 0, "Enqueue").setIcon(android.R.drawable.ic_menu_add);
-		menu.add(0, MENU_ENQUEUE_PLAY, 0, "Enqueue and Play").setIcon(android.R.drawable.ic_menu_add);
-		
+		menu.add(0, MENU_PLAY, 0, "Play").setIcon(
+				android.R.drawable.ic_media_play);
+		menu.add(0, MENU_ENQUEUE, 0, "Enqueue").setIcon(
+				android.R.drawable.ic_menu_add);
+		menu.add(0, MENU_ENQUEUE_PLAY, 0, "Enqueue and Play").setIcon(
+				android.R.drawable.ic_menu_add);
+
+	}
+
+	public void onStop() {
+		mCurrentActivity.unbindService(mPlayerConnection);
 	}
 }

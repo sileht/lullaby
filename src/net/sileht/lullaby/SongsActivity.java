@@ -122,7 +122,7 @@ public class SongsActivity extends Activity {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		mViewUtils.onStart(!mStandAloneActivity);
+		mViewUtils.onStart(false);
 	}
 	
 	@Override

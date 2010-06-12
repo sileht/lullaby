@@ -108,7 +108,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 		if (useActivityGroup){
 			c = (Context) ((Activity) mContext).getParent();
 		}else{
-		c = mContext;
+			c = mContext;
 		} 
 		c.startService(new Intent(c, PlayerService.class));
 		c.bindService(new Intent(c, PlayerService.class),

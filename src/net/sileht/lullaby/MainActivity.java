@@ -23,7 +23,7 @@ package net.sileht.lullaby;
 import java.io.File;
 
 import net.sileht.lullaby.R;
-import net.sileht.lullaby.backend.Player;
+import net.sileht.lullaby.backend.PlayerService;
 import net.sileht.lullaby.objects.Song;
 
 import android.app.ActivityGroup;
@@ -88,12 +88,12 @@ public class MainActivity extends ActivityGroup {
 	private static final String TAG = "LullabyMainActivity";
 
 	// Bind Service Player
-	private Player mPlayer;
+	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
-			mPlayer = ((Player.PlayerBinder) service).getService();
+			mPlayer = ((PlayerService.PlayerBinder) service).getService();
 			mPlayer.setPlayerListener(new MyPlayerListener());
 			mPlayer.mPlaylist.load(MainActivity.this);
 		}
@@ -230,8 +230,8 @@ public class MainActivity extends ActivityGroup {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		startService(new Intent(MainActivity.this, Player.class));
-		bindService(new Intent(MainActivity.this, Player.class),
+		startService(new Intent(MainActivity.this, PlayerService.class));
+		bindService(new Intent(MainActivity.this, PlayerService.class),
 				mPlayerConnection, 0);
 	}
 
@@ -391,14 +391,16 @@ public class MainActivity extends ActivityGroup {
 				mPlayer.mPlaylist.load(this);
 			break;
 		case MENU_CLEARCACHE:
-			(new File(Environment.getExternalStorageDirectory(),
-					"Android/data/com.sileht.lullaby/cache")).delete();
-			break;
+			File root = new File(Environment.getExternalStorageDirectory(),
+			"Android/data/com.sileht.lullaby/cache");
+			for(File f : root.listFiles()){ f.delete(); }
+			root.delete();	
+			return true;	
 		case MENU_EXIT:
 			mPlayer.stop();
-			stopService(new Intent(this, Player.class));
+			stopService(new Intent(this, PlayerService.class));
 			finish();
-			break;
+			return true;
 		default:
 			return false;
 		}
@@ -426,7 +428,7 @@ public class MainActivity extends ActivityGroup {
 		return false;
 	}
 
-	private class MyPlayerListener extends Player.PlayerListener {
+	private class MyPlayerListener extends PlayerService.PlayerListener {
 
 		private int mBuffering = -1;
 		private Song mSong;

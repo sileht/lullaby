@@ -21,7 +21,7 @@ package net.sileht.lullaby;
  */
 
 import net.sileht.lullaby.R;
-import net.sileht.lullaby.backend.Player;
+import net.sileht.lullaby.backend.PlayerService;
 import net.sileht.lullaby.objects.Song;
 
 import android.app.ListActivity;
@@ -52,12 +52,12 @@ public class PlayingPlaylistActivity extends ListActivity implements
 	// private static final String TAG = "LullabyPlayingPlaylist";
 
 	// Bind Service Player
-	private Player mPlayer;
+	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
-			mPlayer = ((Player.PlayerBinder) service).getService();
+			mPlayer = ((PlayerService.PlayerBinder) service).getService();
 			mPlayer.mPlaylist.setAdapter(mAdapter);
 			mPlayer.setPlayerListener(new MyPlayerListener());
 		}
@@ -94,8 +94,8 @@ public class PlayingPlaylistActivity extends ListActivity implements
 	protected void onStart(){
 		super.onStart();
 		Context c = this.getParent();
-		c.startService(new Intent(c, Player.class));
-		c.bindService(new Intent(c, Player.class),
+		c.startService(new Intent(c, PlayerService.class));
+		c.bindService(new Intent(c, PlayerService.class),
 				mPlayerConnection, Context.BIND_AUTO_CREATE);
 	}
 	private final static int MENU_PLAY_SELECTION = 0;
@@ -201,7 +201,7 @@ public class PlayingPlaylistActivity extends ListActivity implements
 		}
 	}
 
-	private class MyPlayerListener extends Player.PlayerListener {
+	private class MyPlayerListener extends PlayerService.PlayerListener {
 
 		@Override
 		public void onBuffering(int buffer) {

@@ -41,7 +41,7 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-public class Player extends Service {
+public class PlayerService extends Service {
 
 	private MediaPlayer mPlayer;
 
@@ -352,8 +352,8 @@ public class Player extends Service {
 	 * the same process as its clients, we don't need to deal with IPC.
 	 */
 	public class PlayerBinder extends Binder {
-		public Player getService() {
-			return Player.this;
+		public PlayerService getService() {
+			return PlayerService.this;
 		}
 	}
 

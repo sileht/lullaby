@@ -30,7 +30,7 @@
             <meta-data android:name="android.app.searchable"
                        android:resource="@xml/searchable"/>
         </activity>
-<service android:name=".backend.Player"></service>
+<service android:name=".backend.PlayerService"></service>
 </application>
 
 <uses-permission android:name="android.permission.INTERNET"></uses-permission>

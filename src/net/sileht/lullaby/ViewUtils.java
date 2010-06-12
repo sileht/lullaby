@@ -19,7 +19,7 @@ package net.sileht.lullaby;
  * | Boston, MA  02111-1307, USA.                                           |
  * +------------------------------------------------------------------------+
  */
-import net.sileht.lullaby.backend.Player;
+import net.sileht.lullaby.backend.PlayerService;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -82,11 +82,11 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 	private Context mContext;
 
 	// Bind Service Player
-	private Player mPlayer;
+	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
 		public void onServiceConnected(ComponentName className, IBinder service) {
-			mPlayer = ((Player.PlayerBinder) service).getService();
+			mPlayer = ((PlayerService.PlayerBinder) service).getService();
 			Log.v(TAG, "View Utils connected to player");
 		}
 
@@ -110,8 +110,8 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 		}else{
 		c = mContext;
 		} 
-		c.startService(new Intent(c, Player.class));
-		c.bindService(new Intent(c, Player.class),
+		c.startService(new Intent(c, PlayerService.class));
+		c.bindService(new Intent(c, PlayerService.class),
 				mPlayerConnection, 0);
 	}
 

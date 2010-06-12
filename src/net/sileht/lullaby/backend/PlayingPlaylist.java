@@ -43,12 +43,12 @@ public class PlayingPlaylist {
 
 	private BaseAdapter mAdapter;
 	
-	private Player mPlayer;
+	private PlayerService mPlayer;
 
 	private static final String TAG = "DroidZikPlayingPlaylist";
 
 	
-	public PlayingPlaylist(Player player){
+	public PlayingPlaylist(PlayerService player){
 		mPlayer = player;
 	}
 	

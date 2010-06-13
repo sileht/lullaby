@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import net.sileht.lullaby.Lullaby;
 import net.sileht.lullaby.objects.*;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -39,6 +40,7 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.lang.Integer;
 import java.lang.Long;
@@ -51,6 +53,7 @@ public class AmpacheBackend extends HandlerThread {
 	public String authToken = "";
 	public String lastErr;
 
+	private Context mContext;
 	private XMLReader reader;
 
 	private SharedPreferences prefs;
@@ -68,16 +71,69 @@ public class AmpacheBackend extends HandlerThread {
 
 	private static final String TAG = "LullabyAmpacheConnector";
 
+	// Only to report User Status
+	private boolean isConnectedToAmpache = false;
+	private boolean isConnectionToAmpacheFailed = false;
+	private boolean hasAlreadyCheckConfigured = false;
+	
 	public AmpacheBackend(Context context) throws Exception {
 		super("AmpacheBackend");
+		mContext = context;
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		System.setProperty("org.xml.sax.driver", "org.xmlpull.v1.sax2.Driver");
 		reader = XMLReaderFactory.createXMLReader();
 		mTimerPing = new Timer();
 		setDaemon(true);
 		start();
+		(new AsyncUIUpdate()).start();
 	}
 
+	private void checkConnection() {
+		boolean isConnectedToAmpacheTest = (Lullaby.comm.authToken != null && !Lullaby.comm.authToken
+				.equals(""));
+
+		if (!isConnectedToAmpache && isConnectedToAmpacheTest) {
+			isConnectionToAmpacheFailed = false;
+			Toast.makeText(mContext, "Connected to Ampache.", Toast.LENGTH_LONG)
+					.show();
+		}
+		if (isConnectedToAmpache && !isConnectedToAmpacheTest) {
+			Toast.makeText(mContext, "Ampache connection lost.", Toast.LENGTH_LONG)
+					.show();
+			isConnectionToAmpacheFailed = true;
+		}
+		if (Lullaby.comm.hasAlreadyTryHandshake && !isConnectionToAmpacheFailed
+				&& !isConnectedToAmpache && !isConnectedToAmpacheTest) {
+			Toast.makeText(mContext,
+					"Ampache connection failed.\nCheck your settings.",
+					Toast.LENGTH_LONG).show();
+			isConnectionToAmpacheFailed = true;
+		}
+
+		if (!hasAlreadyCheckConfigured && !Lullaby.comm.isConfigured()) {
+			Toast.makeText(mContext,
+					"Ampache not configured.\nCheck your settings.",
+					Toast.LENGTH_LONG).show();
+			hasAlreadyCheckConfigured = true;
+		}
+
+		isConnectedToAmpache = isConnectedToAmpacheTest;
+	}
+	
+
+	private class AsyncUIUpdate extends Handler {
+
+		public void start() {
+			super.sendEmptyMessage(0);
+		}
+
+		@Override
+		public void handleMessage(Message msg) {
+			checkConnection();
+			msg = obtainMessage(0);
+			sendMessageDelayed(msg, 1000);
+		}
+	}
 	public void force_auth_request() {
 		disconnect();
 		ping();

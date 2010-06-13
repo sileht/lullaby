@@ -24,10 +24,9 @@ package net.sileht.lullaby.backend;
 import java.util.ArrayList;
 
 import net.sileht.lullaby.Lullaby;
-import net.sileht.lullaby.MainActivity;
+import net.sileht.lullaby.PlayingActivity;
 import net.sileht.lullaby.R;
 import net.sileht.lullaby.objects.Song;
-
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -40,6 +39,7 @@ import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 public class PlayerService extends Service {
 
@@ -121,14 +121,20 @@ public class PlayerService extends Service {
 			obj.onTogglePlaying(isPlaying());
 		}
 		if (isPlaying()) {
+			RemoteViews views = new RemoteViews(this.getPackageName(),
+					R.layout.statusbar);
+			views.setImageViewResource(R.id.icon, R.drawable.status_icon);
+			views.setTextViewText(R.id.trackname, mSong.name);
+			views.setTextViewText(R.id.artistalbum, mSong.album + " - "
+					+ mSong.artist);
+
 			Notification n = new Notification();
-			n.icon = R.drawable.icon;
+			n.icon = R.drawable.status_icon;
 			n.tickerText = "Playing " + mSong.name;
 			n.flags |= Notification.FLAG_ONGOING_EVENT;
-			Intent notificationIntent = new Intent(this, MainActivity.class);
-			PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-					notificationIntent, 0);
-			n.setLatestEventInfo(this, mSong.name, mSong.album + " - " + mSong.artist, contentIntent);
+			n.contentView = views;
+			n.contentIntent = PendingIntent.getActivity(this, 0,
+					new Intent(this, PlayingActivity.class), 0);
 			startForeground(1, n);
 		} else {
 			stopForeground(true);
@@ -170,6 +176,10 @@ public class PlayerService extends Service {
 
 	public int getBuffer() {
 		return mBuffering;
+	}
+	
+	public Song getSong(){
+		return mSong;
 	}
 
 	public void playSong(Song song) {

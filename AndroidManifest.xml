@@ -20,6 +20,7 @@
 <activity android:name="AlbumActivity"></activity>
 <activity android:name="PlayingPlaylistActivity"></activity>
 <activity android:name="PlaylistsActivity"></activity>
+<activity android:name="PlayingActivity" android:theme="@android:style/Theme.Wallpaper.NoTitleBar" ></activity>
 <activity android:name="SettingActivity"></activity>
 <activity android:name="SongsActivity"
                   android:label="Search">

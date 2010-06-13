@@ -23,4 +23,5 @@
     
 <string name="summary_infos_preferences">Lullaby need READ permissions to STREAM ACCES and API/RPC</string>
 <string name="title_infos_preferences">ACL Informations</string>
+<string name="slash">/</string>
 </resources>

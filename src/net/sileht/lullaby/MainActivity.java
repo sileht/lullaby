@@ -34,9 +34,7 @@ import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -49,7 +47,6 @@ import android.view.GestureDetector.SimpleOnGestureListener;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,7 +59,7 @@ public class MainActivity extends ActivityGroup {
 	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 
 	private GestureDetector gestureDetector;
-	View.OnTouchListener gestureListener;
+	private View.OnTouchListener gestureListener;
 
 	private BitmapDrawable mDefaultAlbumIcon;
 
@@ -71,19 +68,8 @@ public class MainActivity extends ActivityGroup {
 	private TextView line1;
 	private TextView line2;
 	private ImageButton playpause;
-	private ImageButton next;
-	private ImageButton previous;
 	private ImageView artwork;
-	private TextView mTimeView;
-	private TextView mDurationView;
-	private SeekBar mProgress;
 	private FrameLayout bottombar;
-
-	private boolean isCurrentlySeek = false;
-	private boolean isConnectedToAmpache = false;
-	private boolean isConnectionToAmpacheFailed = false;
-
-	private boolean hasAlreadyCheckConfigured = false;
 
 	private static final String TAG = "LullabyMainActivity";
 
@@ -153,13 +139,6 @@ public class MainActivity extends ActivityGroup {
 				res.getDrawable(R.drawable.ic_tab_albums)).setContent(intent);
 		tabHost.addTab(spec);
 
-		/*
-		 * intent = new Intent().setClass(this, SongsActivity.class); spec =
-		 * tabHost.newTabSpec("songs").setIndicator("Songs",
-		 * res.getDrawable(R.drawable.ic_tab_songs)).setContent(intent);
-		 * tabHost.addTab(spec);
-		 */
-
 		intent = new Intent().setClass(this, PlaylistsActivity.class);
 		spec = tabHost.newTabSpec("playlist").setIndicator("Playlists",
 				res.getDrawable(R.drawable.ic_tab_playlists))
@@ -196,34 +175,17 @@ public class MainActivity extends ActivityGroup {
 				mPlayer.doPauseResume();
 			}
 		});
-		next = (ImageButton) findViewById(R.id.next);
-		next.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mPlayer.mPlaylist.playNext();
-			}
-		});
-		previous = (ImageButton) findViewById(R.id.previous);
-		previous.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mPlayer.mPlaylist.playPrevious();
-			}
-		});
 
-		mTimeView = (TextView) findViewById(R.id.time_current);
-		mTimeView.setText(Utils.stringForTime(0));
+		((FrameLayout) findViewById(R.id.bottombar))
+				.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						Intent i = new Intent();
+						i.setClass(v.getContext(), PlayingActivity.class);
+						startActivity(i);
+					}
+				});
 
-		mDurationView = (TextView) findViewById(R.id.time);
-		mDurationView.setText(Utils.stringForTime(0));
-
-		mProgress = (SeekBar) findViewById(R.id.mediacontroller_progress);
-		mProgress.setMax(1000);
-		mProgress.setProgress(0);
-		mProgress.setSecondaryProgress(0);
-		mProgress.setOnSeekBarChangeListener(new MySeekBarListener());
-
-		(new AsyncUIUpdate()).start();
 
 	}
 
@@ -235,44 +197,13 @@ public class MainActivity extends ActivityGroup {
 				mPlayerConnection, 0);
 	}
 
-	private void checkConnection() {
-		boolean isConnectedToAmpacheTest = (Lullaby.comm.authToken != null && !Lullaby.comm.authToken
-				.equals(""));
-
-		if (!isConnectedToAmpache && isConnectedToAmpacheTest) {
-			isConnectionToAmpacheFailed = false;
-			Toast.makeText(this, "Connected to Ampache.", Toast.LENGTH_LONG)
-					.show();
-		}
-		if (isConnectedToAmpache && !isConnectedToAmpacheTest) {
-			Toast.makeText(this, "Ampache connection lost.", Toast.LENGTH_LONG)
-					.show();
-			isConnectionToAmpacheFailed = true;
-		}
-		if (Lullaby.comm.hasAlreadyTryHandshake && !isConnectionToAmpacheFailed
-				&& !isConnectedToAmpache && !isConnectedToAmpacheTest) {
-			Toast.makeText(this,
-					"Ampache connection failed.\nCheck your settings.",
-					Toast.LENGTH_LONG).show();
-			isConnectionToAmpacheFailed = true;
-		}
-
-		if (!hasAlreadyCheckConfigured && !Lullaby.comm.isConfigured()) {
-			Toast.makeText(this,
-					"Ampache not configured.\nCheck your settings.",
-					Toast.LENGTH_LONG).show();
-			hasAlreadyCheckConfigured = true;
-		}
-
-		isConnectedToAmpache = isConnectedToAmpacheTest;
-	}
 
 	@Override
-	protected void onStop() {
+	protected void onPause() {
 		if (mPlayer != null) {
 			mPlayer.mPlaylist.save(this);
 		}
-		super.onStop();
+		super.onPause();
 	}
 
 	@Override
@@ -284,74 +215,26 @@ public class MainActivity extends ActivityGroup {
 		super.onDestroy();
 	}
 
-	private void setProgress() {
-		if (isCurrentlySeek) {
-			return;
-		}
-		int duration = 0;
-		int position = -1;
-		if (mPlayer != null) {
-			position = mPlayer.getCurrentPosition();
-			duration = mPlayer.getDuration();
-		}
-		if (duration > 0) {
-			long pos = 1000L * position / duration;
-			mProgress.setProgress((int) pos);
-			int percent = mPlayer.getBuffer();
-			mProgress.setSecondaryProgress(percent * 10);
-			mTimeView.setText(Utils.stringForTime(position));
-			mDurationView.setText(Utils.stringForTime(duration));
-		} else {
-			mProgress.setProgress(0);
-			mProgress.setSecondaryProgress(0);
-			mTimeView.setText(Utils.stringForTime(0));
-			mDurationView.setText(Utils.stringForTime(0));
-		}
-	}
-
-	public void SeekExpanderClick(View v) {
-		View seek = findViewById(R.id.seekbar);
-		View control = findViewById(R.id.control);
-		if (seek.getVisibility() == View.VISIBLE) {
-			seek.setVisibility(View.GONE);
-			control.invalidate();
-		} else {
-			seek.setVisibility(View.VISIBLE);
-		}
-	}
-
 	private static final int MENU_SETTINGS = 0;
 	private static final int MENU_CLEAR = MENU_SETTINGS + 1;
 	private static final int MENU_SAVE = MENU_CLEAR + 1;
 	private static final int MENU_LOAD = MENU_SAVE + 1;
 	private static final int MENU_EXIT = MENU_LOAD + 1;
-	private static final int MENU_SHUFFLE = MENU_EXIT + 1;
-	private static final int MENU_REPEAT = MENU_SHUFFLE + 1;
-	private static final int MENU_CLEARCACHE = MENU_REPEAT + 1;
+	private static final int MENU_CLEARCACHE = MENU_EXIT + 1;
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		menu.add(0, MENU_SHUFFLE, 0, "Shuffle").setIcon(
-				R.drawable.ic_menu_shuffle);
-
-		menu.add(0, MENU_REPEAT, 0, "Repeat").setIcon(
-				R.drawable.ic_mp_repeat_off_btn);
-
 		menu.add(0, MENU_CLEAR, 0, "Clear playlist").setIcon(
 				android.R.drawable.ic_menu_close_clear_cancel);
-
 		menu.add(0, MENU_SAVE, 0, "Save playlist").setIcon(
 				android.R.drawable.ic_menu_save);
 		menu.add(0, MENU_LOAD, 0, "Load playlist").setIcon(
 				android.R.drawable.ic_menu_edit);
-
 		menu.add(0, MENU_SETTINGS, 0, "Settings").setIcon(
 				android.R.drawable.ic_menu_preferences);
-
 		menu.add(0, MENU_CLEARCACHE, 0, "Clear cache").setIcon(
 				android.R.drawable.ic_menu_close_clear_cancel);
-
 		menu.add(0, MENU_EXIT, 0, "Exit").setIcon(
 				android.R.drawable.ic_menu_close_clear_cancel);
 		return true;
@@ -361,20 +244,6 @@ public class MainActivity extends ActivityGroup {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		Intent intent = null;
 		switch (item.getItemId()) {
-		case MENU_REPEAT:
-			if (mPlayer != null) {
-				mPlayer.mPlaylist.toggleRepeat();
-				if (mPlayer.mPlaylist.isRepeat()) {
-					item.setIcon(R.drawable.ic_mp_repeat_all_btn);
-				} else {
-					item.setIcon(R.drawable.ic_mp_repeat_off_btn);
-				}
-			}
-			break;
-		case MENU_SHUFFLE:
-			if (mPlayer != null)
-				mPlayer.mPlaylist.shuffle();
-			break;
 		case MENU_SETTINGS:
 			intent = new Intent().setClass(this, SettingActivity.class);
 			break;
@@ -392,10 +261,12 @@ public class MainActivity extends ActivityGroup {
 			break;
 		case MENU_CLEARCACHE:
 			File root = new File(Environment.getExternalStorageDirectory(),
-			"Android/data/com.sileht.lullaby/cache");
-			for(File f : root.listFiles()){ f.delete(); }
-			root.delete();	
-			return true;	
+					"Android/data/com.sileht.lullaby/cache");
+			for (File f : root.listFiles()) {
+				f.delete();
+			}
+			root.delete();
+			return true;
 		case MENU_EXIT:
 			mPlayer.stop();
 			stopService(new Intent(this, PlayerService.class));
@@ -492,51 +363,6 @@ public class MainActivity extends ActivityGroup {
 			} else {
 				playpause.setImageResource(android.R.drawable.ic_media_play);
 			}
-		}
-	}
-
-	private class MySeekBarListener implements SeekBar.OnSeekBarChangeListener {
-
-		@Override
-		public void onStopTrackingTouch(SeekBar seek) {
-			isCurrentlySeek = false;
-		}
-
-		@Override
-		public void onStartTrackingTouch(SeekBar seek) {
-			isCurrentlySeek = true;
-		}
-
-		@Override
-		public void onProgressChanged(SeekBar seekbar, int progress,
-				boolean fromUser) {
-			if (fromUser && mPlayer != null && mPlayer.isSeekable()) {
-				int duration = mPlayer.getDuration();
-				int seek = (int) (progress * duration / 1000L);
-				int preloaded = mPlayer.getBuffer() * duration;
-				Log.d(TAG, "seek: " + Utils.stringForTime(seek) + " buf "
-						+ mPlayer.getBuffer() + " preload: "
-						+ Utils.stringForTime(preloaded));
-				if (seek <= preloaded) {
-					Log.d(TAG, "Seeking to " + Utils.stringForTime(seek));
-					mPlayer.seekTo(seek);
-				}
-			}
-		}
-	}
-
-	private class AsyncUIUpdate extends Handler {
-
-		public void start() {
-			super.sendEmptyMessage(0);
-		}
-
-		@Override
-		public void handleMessage(Message msg) {
-			setProgress();
-			checkConnection();
-			msg = obtainMessage(0);
-			sendMessageDelayed(msg, 1000);
 		}
 	}
 

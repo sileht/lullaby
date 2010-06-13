@@ -39,8 +39,17 @@ public class PlayingPlaylist {
 	private ArrayList<Song> mPlaylist = new ArrayList<Song>();
 	private int mCurrentPlayingPosition = -1;
 	private boolean mHideCurrentPosition = false;
-	private boolean mRepeat = false;
+	
+	private Song lastPlayed;
 
+
+	public enum REPEAT_MODE {
+		Off,Once,All
+	}
+	
+	private REPEAT_MODE mRepeat = REPEAT_MODE.Off;
+	private boolean mSuffle = false;
+	
 	private BaseAdapter mAdapter;
 	
 	private PlayerService mPlayer;
@@ -52,8 +61,28 @@ public class PlayingPlaylist {
 		mPlayer = player;
 	}
 	
-	public boolean toggleRepeat() {
-		mRepeat = !mRepeat;
+	public boolean toggleShuffle() {
+		mSuffle = !mSuffle;
+		return mSuffle;
+	}
+	public boolean shuffleEnabled(){
+		return mSuffle;		
+	}
+	
+	public REPEAT_MODE toggleRepeat() {
+		switch (mRepeat) {
+		case Off:
+			mRepeat = REPEAT_MODE.All;
+			break;
+		case All:
+			mRepeat = REPEAT_MODE.Once;
+			break;
+		case Once:
+			mRepeat = REPEAT_MODE.Off;
+			break;
+		default:
+			break;
+		}
 		return mRepeat;
 	}
 
@@ -75,7 +104,7 @@ public class PlayingPlaylist {
 		return mPlaylist.isEmpty();
 	}
 	
-	public boolean isRepeat() {
+	public REPEAT_MODE getRepeatMode(){
 		return mRepeat;
 	}
 
@@ -119,13 +148,15 @@ public class PlayingPlaylist {
 
 	public void play(int position) {
 		mCurrentPlayingPosition = position - 1;
-		mPlayer.playSong(getNextSong());
+		lastPlayed = getNextSong();
+		mPlayer.playSong(lastPlayed);
 	}
 
 
 	public Song playNext() {
 		Song song = getNextSong();
 		if (song != null) {
+			lastPlayed = song;
 			mPlayer.playSong(song);
 		}
 		return song;
@@ -134,16 +165,24 @@ public class PlayingPlaylist {
 	public Song playPrevious() {
 		Song song = getPreviousSong();
 		if (song != null) {
+			lastPlayed = song;
 			mPlayer.playSong(song);
 		}
 		return song;
 	}
+	
 	private Song getPreviousSong() {
+		if (mRepeat == REPEAT_MODE.Once) {
+			if (lastPlayed != null){
+				return lastPlayed;
+			}
+		}
+		
 		if (mPlaylist.size() < 0) {
 			mCurrentPlayingPosition = -1;
 		} else if (mCurrentPlayingPosition - 1 > 0) {
 			mCurrentPlayingPosition -= 1;
-		} else if (mRepeat) {
+		} else if (mRepeat == REPEAT_MODE.All) {
 			mCurrentPlayingPosition = mPlaylist.size() - 1;
 		} else {
 			mCurrentPlayingPosition = -1;
@@ -160,11 +199,17 @@ public class PlayingPlaylist {
 	}
 
 	private Song getNextSong() {
+		if (mRepeat == REPEAT_MODE.Once) {
+			if (lastPlayed != null){
+				return lastPlayed;
+			}
+		}
+		
 		if (mPlaylist.size() < 0) {
 			mCurrentPlayingPosition = -1;
 		} else if (mCurrentPlayingPosition + 1 < mPlaylist.size()) {
 			mCurrentPlayingPosition += 1;
-		} else if (mRepeat) {
+		} else if (mRepeat == REPEAT_MODE.All) {
 			mCurrentPlayingPosition = 0;
 		} else {
 			mCurrentPlayingPosition = -1;

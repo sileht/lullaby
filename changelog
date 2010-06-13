@@ -1,7 +1,9 @@
 
 Lullaby 1.1
-- ping server every 5 minutes
-- add notification
-- can't seek in none preload zone
-- add TextFilter to song view
-- cache metadata
+- Ping server every 5 minutes
+- Add notification
+- Can't seek in none preload zone
+- Add TextFilter to song view
+- Quick cache metadata
+- Add Playing Activity
+- Add drawable for hdpi device

@@ -1,6 +1,7 @@
 package net.sileht.lullaby;
 
 import net.sileht.lullaby.R;
+import net.sileht.lullaby.backend.ArtworkAsyncHelper;
 import net.sileht.lullaby.objects.Song;
 import net.sileht.lullaby.player.PlayerService;
 import net.sileht.lullaby.player.PlayingPlaylist.REPEAT_MODE;
@@ -9,6 +10,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.gesture.GestureOverlayView;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -31,6 +34,9 @@ public class PlayingActivity extends Activity {
 	private static final int SWIPE_MAX_OFF_PATH = 300;
 	private static final int SWIPE_MIN_DISTANCE = 120;
 	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+	
+	private static int mArtworkWidth = -1;
+	private static int mArtWorkHeight = -1;
 
 	private TextView mTrackName;
 	private TextView mArtistName;
@@ -80,6 +86,13 @@ public class PlayingActivity extends Activity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
 		setContentView(R.layout.audio_player);
+
+		if (mArtworkWidth < 0) {
+			Bitmap icon = ((BitmapDrawable) this.getResources().getDrawable(
+					R.drawable.albumart_mp_unknown)).getBitmap();
+			mArtworkWidth = icon.getWidth();
+			mArtWorkHeight = icon.getHeight();
+		}
 
 		mTrackName = (TextView) findViewById(R.id.trackname);
 		mArtistName = (TextView) findViewById(R.id.artistname);
@@ -229,8 +242,9 @@ public class PlayingActivity extends Activity {
 
 		private void setCover() {
 			if (mSong != null) {
-				artwork.setImageResource(R.drawable.albumart_mp_unknown);
-				Lullaby.cover.setCachedArtwork(artwork, mSong.art);
+				ArtworkAsyncHelper.updateArtwork(PlayingActivity.this, artwork,
+						mSong.art, R.drawable.albumart_mp_unknown,
+						mArtworkWidth, mArtWorkHeight);
 			}
 		}
 

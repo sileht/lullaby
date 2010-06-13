@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.sileht.lullaby.R;
+import net.sileht.lullaby.backend.ArtworkAsyncHelper;
 import net.sileht.lullaby.objects.Album;
 import net.sileht.lullaby.objects.Artist;
 
@@ -31,6 +32,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -55,13 +57,6 @@ public class ArtistAlbumsActivity extends Activity {
 	private ExpandableListView mListView;
 
 	private ViewUtils mViewUtils;
-
-	static class ViewHolder {
-		TextView line1;
-		TextView line2;
-		ImageView play_indicator;
-		ImageView icon;
-	}
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -158,7 +153,9 @@ public class ArtistAlbumsActivity extends Activity {
 	static class ArtistAlbumsAdapter extends SimpleCursorTreeAdapter implements
 			SectionIndexer {
 
-		private final BitmapDrawable mDefaultAlbumIcon;
+		private static int mArtworkWidth = -1;
+		private static int mArtWorkHeight = -1;
+		
 		private final StringBuilder mBuffer = new StringBuilder();
 		private final ArtistAlbumsActivity mCurrentActivity;
 
@@ -166,6 +163,14 @@ public class ArtistAlbumsActivity extends Activity {
         private Resources mRessource;
         private Cursor mCursor;
 
+
+    	static class ViewHolder {
+    		TextView line1;
+    		TextView line2;
+    		ImageView play_indicator;
+    		ImageView icon;
+    	}
+    	
 		public ArtistAlbumsAdapter(Context context,
 				ArtistAlbumsActivity currentactivity, Cursor cursor,
 				int glayout, String[] gfrom, int[] gto, int clayout,
@@ -176,13 +181,14 @@ public class ArtistAlbumsActivity extends Activity {
 			mCursor = cursor;
 			mRessource = context.getResources();
 			mCurrentActivity = currentactivity;
-			mDefaultAlbumIcon = (BitmapDrawable) mRessource
-					.getDrawable(R.drawable.albumart_mp_unknown_list);
-			// no filter or dither, it's a lot faster and we can't tell the
-			// difference
-			mDefaultAlbumIcon.setFilterBitmap(false);
-			mDefaultAlbumIcon.setDither(false);
 
+			if (mArtworkWidth < 0) {
+				Bitmap icon = ((BitmapDrawable) mRessource.getDrawable(
+						R.drawable.albumart_mp_unknown_list)).getBitmap();
+				mArtworkWidth = icon.getWidth();
+				mArtWorkHeight = icon.getHeight();
+			}
+			
 			mIndexer = new AlphabetIndexer(mCursor, mCursor
 					.getColumnIndex(ViewUtils.ARTIST_NAME), mRessource
 					.getString(R.string.fast_scroll_numeric_alphabet));
@@ -274,8 +280,8 @@ public class ArtistAlbumsActivity extends Activity {
 			vh.line2 = (TextView) v.findViewById(R.id.line2);
 			vh.play_indicator = (ImageView) v.findViewById(R.id.play_indicator);
 			vh.icon = (ImageView) v.findViewById(R.id.icon);
-			vh.icon.setBackgroundDrawable(mDefaultAlbumIcon);
 			vh.icon.setPadding(0, 0, 1, 0);
+			vh.icon.setImageResource(R.drawable.albumart_mp_unknown_list);
 			v.setTag(vh);
 			return v;
 		}
@@ -351,10 +357,20 @@ public class ArtistAlbumsActivity extends Activity {
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ART));
 
 			if (art == null || art.length() == 0) {
-				iv.setBackgroundDrawable(mDefaultAlbumIcon);
-				iv.setImageDrawable(null);
+				iv.setImageResource(R.drawable.albumart_mp_unknown_list);
 			} else {
-				Lullaby.cover.setCachedArtwork(iv, art);
+				ArtworkAsyncHelper.updateArtwork(view.getContext(), vh.icon,
+						art, R.drawable.albumart_mp_unknown_list,
+						mArtworkWidth, mArtWorkHeight,
+						new ArtworkAsyncHelper.OnImageLoadCompleteListener() {
+
+							@Override
+							public void onImageLoadComplete(int token,
+									ImageView iView, boolean imagePresent) {
+								notifyDataSetChanged();
+
+							}
+						});
 
 			}
 

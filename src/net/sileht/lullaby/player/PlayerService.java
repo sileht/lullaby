@@ -230,6 +230,8 @@ public class PlayerService extends Service {
 		} else if (mState == STATE.Prepared) {
 			mPlayer.start();
 			setState(STATE.Started);
+		} else { 
+			mPlaylist.playNextAutomatic();
 		}
 	}
 

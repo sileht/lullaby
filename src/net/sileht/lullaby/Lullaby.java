@@ -19,18 +19,13 @@ package net.sileht.lullaby;
 * +------------------------------------------------------------------------+
 */
 import net.sileht.lullaby.backend.AmpacheBackend;
-import net.sileht.lullaby.backend.ArtworkBackend;
 import android.app.Application;
 
 public final class Lullaby extends Application {
 
 	public static AmpacheBackend comm;
 
-	public static ArtworkBackend cover;
-
 	public void onCreate() {
-		cover = new ArtworkBackend();
-
 		try {
 			comm = new AmpacheBackend(this);
 		} catch (Exception poo) {

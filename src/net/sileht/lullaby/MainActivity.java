@@ -22,20 +22,19 @@ package net.sileht.lullaby;
 
 import java.io.File;
 
-import net.sileht.lullaby.R;
+import net.sileht.lullaby.backend.ArtworkAsyncHelper;
 import net.sileht.lullaby.objects.Song;
 import net.sileht.lullaby.player.PlayerService;
-
 import android.app.ActivityGroup;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -58,20 +57,19 @@ public class MainActivity extends ActivityGroup {
 	private static final int SWIPE_MIN_DISTANCE = 120;
 	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 
+	private static int mArtworkWidth = -1;
+	private static int mArtWorkHeight = -1;
+
 	private GestureDetector gestureDetector;
 	private View.OnTouchListener gestureListener;
-
-	private BitmapDrawable mDefaultAlbumIcon;
-
-	public boolean mSeekbarEnabled = false;
-
+	
 	private TextView line1;
 	private TextView line2;
 	private ImageButton playpause;
 	private ImageView artwork;
 	private FrameLayout bottombar;
 
-	private static final String TAG = "LullabyMainActivity";
+	//private static final String TAG = "LullabyMainActivity";
 
 	// Bind Service Player
 	private PlayerService mPlayer;
@@ -96,6 +94,13 @@ public class MainActivity extends ActivityGroup {
 
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
+		if (mArtworkWidth < 0) {
+			Bitmap icon = ((BitmapDrawable) this.getResources().getDrawable(
+					R.drawable.albumart_mp_unknown_list)).getBitmap();
+			mArtworkWidth = icon.getWidth();
+			mArtWorkHeight = icon.getHeight();
+		}
+
 		setContentView(R.layout.main);
 
 		if (!Lullaby.comm.isConfigured()) {
@@ -105,16 +110,6 @@ public class MainActivity extends ActivityGroup {
 		}
 
 		Resources res = getResources(); // Resource object to get Drawables
-
-		mDefaultAlbumIcon = (BitmapDrawable) res
-				.getDrawable(R.drawable.albumart_mp_unknown_list);
-		// no filter or dither, it's a lot faster and we can't tell the
-		// difference
-		mDefaultAlbumIcon.setFilterBitmap(false);
-		mDefaultAlbumIcon.setDither(false);
-
-		Log.v(TAG, "Start cover thread");
-		Lullaby.cover.setDrawable(mDefaultAlbumIcon);
 
 		TabHost tabHost = (TabHost) findViewById(R.id.tabhost); // The activity
 		// TabHost
@@ -165,8 +160,7 @@ public class MainActivity extends ActivityGroup {
 		tabHost.setOnTouchListener(gestureListener);
 
 		artwork = (ImageView) findViewById(R.id.icon);
-		artwork.setBackgroundDrawable(mDefaultAlbumIcon);
-		artwork.setImageDrawable(null);
+		artwork.setImageResource(R.drawable.albumart_mp_unknown_list);
 
 		playpause = (ImageButton) findViewById(R.id.pause);
 		playpause.setOnClickListener(new View.OnClickListener() {
@@ -186,7 +180,6 @@ public class MainActivity extends ActivityGroup {
 					}
 				});
 
-
 	}
 
 	@Override
@@ -196,7 +189,6 @@ public class MainActivity extends ActivityGroup {
 		bindService(new Intent(MainActivity.this, PlayerService.class),
 				mPlayerConnection, 0);
 	}
-
 
 	@Override
 	protected void onPause() {
@@ -326,9 +318,9 @@ public class MainActivity extends ActivityGroup {
 
 		private void setCover() {
 			if (mSong != null) {
-				artwork.setBackgroundDrawable(mDefaultAlbumIcon);
-				artwork.setImageDrawable(null);
-				Lullaby.cover.setCachedArtwork(artwork, mSong.art);
+				ArtworkAsyncHelper.updateArtwork(MainActivity.this, artwork,
+						mSong.art, R.drawable.albumart_mp_unknown_list,
+						mArtworkWidth, mArtWorkHeight);
 			}
 		}
 
@@ -343,8 +335,7 @@ public class MainActivity extends ActivityGroup {
 			mSong = null;
 			line1.setText("No Playing.");
 			line2.setText("");
-			artwork.setBackgroundDrawable(mDefaultAlbumIcon);
-			artwork.setImageDrawable(null);
+			artwork.setImageResource(R.drawable.albumart_mp_unknown_list);
 		}
 
 		@Override
@@ -359,9 +350,9 @@ public class MainActivity extends ActivityGroup {
 		public void onTogglePlaying(boolean playing) {
 			// mSeekbarEnabled = playing;
 			if (playing) {
-				playpause.setImageResource(android.R.drawable.ic_media_pause);
+				playpause.setImageResource(R.drawable.ic_media_pause);
 			} else {
-				playpause.setImageResource(android.R.drawable.ic_media_play);
+				playpause.setImageResource(R.drawable.ic_media_play);
 			}
 		}
 	}

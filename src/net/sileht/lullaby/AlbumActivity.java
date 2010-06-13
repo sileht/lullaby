@@ -1,35 +1,35 @@
 package net.sileht.lullaby;
 
 /* Copyright (c) 20010 ABAAKOUK Mehdi  <theli48@gmail.com>
-*
-* +------------------------------------------------------------------------+
-* | This program is free software; you can redistribute it and/or          |
-* | modify it under the terms of the GNU General Public License            |
-* | as published by the Free Software Foundation; either version 2         |
-* | of the License, or (at your option) any later version.                 |
-* |                                                                        |
-* | This program is distributed in the hope that it will be useful,        |
-* | but WITHOUT ANY WARRANTY; without even the implied warranty of         |
-* | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          |
-* | GNU General Public License for more details.                           |
-* |                                                                        |
-* | You should have received a copy of the GNU General Public License      |
-* | along with this program; if not, write to the Free Software            |
-* | Foundation, Inc., 59 Temple Place - Suite 330,                         |
-* | Boston, MA  02111-1307, USA.                                           |
-* +------------------------------------------------------------------------+
-*/
+ *
+ * +------------------------------------------------------------------------+
+ * | This program is free software; you can redistribute it and/or          |
+ * | modify it under the terms of the GNU General Public License            |
+ * | as published by the Free Software Foundation; either version 2         |
+ * | of the License, or (at your option) any later version.                 |
+ * |                                                                        |
+ * | This program is distributed in the hope that it will be useful,        |
+ * | but WITHOUT ANY WARRANTY; without even the implied warranty of         |
+ * | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          |
+ * | GNU General Public License for more details.                           |
+ * |                                                                        |
+ * | You should have received a copy of the GNU General Public License      |
+ * | along with this program; if not, write to the Free Software            |
+ * | Foundation, Inc., 59 Temple Place - Suite 330,                         |
+ * | Boston, MA  02111-1307, USA.                                           |
+ * +------------------------------------------------------------------------+
+ */
 
 import java.util.ArrayList;
 
-import net.sileht.lullaby.R;
+import net.sileht.lullaby.backend.ArtworkAsyncHelper;
 import net.sileht.lullaby.objects.Album;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.view.View;
@@ -42,33 +42,25 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
-public class AlbumActivity extends Activity{
+public class AlbumActivity extends Activity {
 
 	static final String TAG = "LullabyAlbumActivity";
-	
+
 	private MatrixCursor albumsData;
 	private SimpleCursorAdapter mAdapter;
 
 	private ViewUtils mViewUtils;
 
-
-	static class ViewHolder {
-		TextView line1;
-		TextView line2;
-		ImageView play_indicator;
-		ImageView icon;
-	}
-
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		setContentView(R.layout.list_classic);
 		ListView lv = (ListView) findViewById(R.id.list);
 		mViewUtils = new ViewUtils(this);
 		lv.setOnItemClickListener(mViewUtils);
 		lv.setOnItemLongClickListener(mViewUtils);
 		lv.setOnCreateContextMenuListener(mViewUtils);
-		
+
 		if (albumsData == null) {
 			// Tell them we're loading
 
@@ -95,7 +87,6 @@ public class AlbumActivity extends Activity{
 		lv.setAdapter(mAdapter);
 	}
 
-
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -103,51 +94,67 @@ public class AlbumActivity extends Activity{
 	}
 
 	@Override
-	protected void onStop(){
+	protected void onStop() {
 		mViewUtils.onStop();
 		super.onStop();
 	}
 
-	static class AlbumsAdapter extends SimpleCursorAdapter  implements SectionIndexer{
+	static class AlbumsAdapter extends SimpleCursorAdapter implements
+			SectionIndexer {
 
-		private final BitmapDrawable mDefaultAlbumIcon;
 		private final StringBuilder mBuffer = new StringBuilder();
+
+		private AlphabetIndexer mIndexer;
+		private Resources mRessource;
+		private Cursor mCursor;
 		
-        private AlphabetIndexer mIndexer;
-        private Resources mRessource;
-        private Cursor mCursor;
-        
+		private static int mArtworkWidth = -1;
+		private static int mArtWorkHeight = -1;
+
+		static class ViewHolder {
+			TextView line1;
+			TextView line2;
+			ImageView play_indicator;
+			ImageView icon;
+		}
+
 		public AlbumsAdapter(Context context, Cursor cursor) {
-			super(context, R.layout.track_list_item_child, cursor,new String[] {}, new int[] {});
-			
+			super(context, R.layout.track_list_item_child, cursor,
+					new String[] {}, new int[] {});
+
 			mCursor = cursor;
 			mRessource = context.getResources();
-			mDefaultAlbumIcon = (BitmapDrawable) mRessource
-					.getDrawable(R.drawable.albumart_mp_unknown_list);
-			// no filter or dither, it's a lot faster and we can't tell the
-			// difference
-			mDefaultAlbumIcon.setFilterBitmap(false);
-			mDefaultAlbumIcon.setDither(false);
 
-			mIndexer = new AlphabetIndexer(mCursor, mCursor.getColumnIndex(ViewUtils.ALBUM_NAME), 
-					mRessource.getString(R.string.fast_scroll_numeric_alphabet));
+
+			if (mArtworkWidth < 0) {
+				Bitmap icon = ((BitmapDrawable) mRessource.getDrawable(
+						R.drawable.albumart_mp_unknown_list)).getBitmap();
+				mArtworkWidth = icon.getWidth();
+				mArtWorkHeight = icon.getHeight();
+			}
 			
+			mIndexer = new AlphabetIndexer(mCursor, mCursor
+					.getColumnIndex(ViewUtils.ALBUM_NAME), mRessource
+					.getString(R.string.fast_scroll_numeric_alphabet));
+
 			setFilterQueryProvider(new FilterQueryProvider() {
 				@Override
 				public Cursor runQuery(CharSequence text) {
-					MatrixCursor nc = new MatrixCursor(ViewUtils.mAlbumsColumnName);
+					MatrixCursor nc = new MatrixCursor(
+							ViewUtils.mAlbumsColumnName);
 					mCursor.moveToFirst();
 					do {
-						if ( mCursor.getString(1).startsWith((String) text)){
+						if (mCursor.getString(1).startsWith((String) text)) {
 							MatrixCursor.RowBuilder rb = nc.newRow();
-							for (int i = 0; i < mCursor.getColumnCount(); i++){
+							for (int i = 0; i < mCursor.getColumnCount(); i++) {
 								rb = rb.add(mCursor.getString(i));
 							}
 						}
 					} while (mCursor.moveToNext());
 
-					mIndexer = new AlphabetIndexer(nc, nc.getColumnIndex(ViewUtils.ALBUM_NAME), 
-							mRessource.getString(R.string.fast_scroll_numeric_alphabet));
+					mIndexer = new AlphabetIndexer(nc, nc
+							.getColumnIndex(ViewUtils.ALBUM_NAME), mRessource
+							.getString(R.string.fast_scroll_numeric_alphabet));
 					return nc;
 				}
 			});
@@ -162,7 +169,7 @@ public class AlbumActivity extends Activity{
 			vh.play_indicator = (ImageView) v.findViewById(R.id.play_indicator);
 			vh.play_indicator.setImageDrawable(null);
 			vh.icon = (ImageView) v.findViewById(R.id.icon);
-			vh.icon.setBackgroundDrawable(mDefaultAlbumIcon);
+			vh.icon.setBackgroundResource(R.drawable.albumart_mp_unknown_list);
 			vh.icon.setPadding(0, 0, 1, 0);
 			vh.icon.setImageDrawable(null);
 			v.setTag(vh);
@@ -179,7 +186,7 @@ public class AlbumActivity extends Activity{
 
 			int numsongs = cursor.getInt(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_TRACKS));
-			
+
 			String artist = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ARTIST));
 
@@ -199,43 +206,40 @@ public class AlbumActivity extends Activity{
 				builder.append(numsongs + " songs");
 			}
 
-			vh.line2.setText(artist+" - "+builder.toString());
+			vh.line2.setText(artist + " - " + builder.toString());
 
-			ImageView iv = vh.icon;
-
-			// We don't actually need the path to the thumbnail file,
-			// we just use it to see if there is album art or not
 			String art = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ART));
 
 			if (art != null & art.length() != 0) {
-				Lullaby.cover.setCachedArtwork(iv, art);
-			}
+				ArtworkAsyncHelper.updateArtwork(view.getContext(), vh.icon,
+						art, R.drawable.albumart_mp_unknown_list,
+						mArtworkWidth, mArtWorkHeight,
+						new ArtworkAsyncHelper.OnImageLoadCompleteListener() {
 
-			/*
-			 * long currentalbumid = MusicUtils.getCurrentAlbumId(); long aid =
-			 * cursor.getLong(0);
-			 * 
-			 * iv = vh.play_indicator; if (currentalbumid == aid) {
-			 * iv.setImageDrawable(mNowPlayingOverlay); } else {
-			 * 
-			 * iv.setImageDrawable(null); }
-			 */
+							@Override
+							public void onImageLoadComplete(int token,
+									ImageView iView, boolean imagePresent) {
+								notifyDataSetChanged();
+
+							}
+						});
+			}
 		}
 
 		@Override
-        public Object[] getSections() {
-            return mIndexer.getSections();
-        }
+		public Object[] getSections() {
+			return mIndexer.getSections();
+		}
 
 		@Override
-        public int getPositionForSection(int sectionIndex) {
-            return mIndexer.getPositionForSection(sectionIndex);
-        }
+		public int getPositionForSection(int sectionIndex) {
+			return mIndexer.getPositionForSection(sectionIndex);
+		}
 
 		@Override
-        public int getSectionForPosition(int position) {
-            return 0;
-        }
+		public int getSectionForPosition(int position) {
+			return 0;
+		}
 	}
 }

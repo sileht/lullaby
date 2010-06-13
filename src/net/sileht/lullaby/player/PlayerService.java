@@ -1,4 +1,4 @@
-package net.sileht.lullaby.backend;
+package net.sileht.lullaby.player;
 
 /* Copyright (c) 20010 ABAAKOUK Mehdi  <theli48@gmail.com>
  * For the PhoneStateListener:
@@ -182,7 +182,10 @@ public class PlayerService extends Service {
 		return mSong;
 	}
 
-	public void playSong(Song song) {
+	protected void playSong(Song song) {
+		
+		Lullaby.comm.ping();
+		
 		setState(STATE.Idle);
 
 		String uri = song.url.replaceFirst(".ogg$", ".mp3").replaceFirst(
@@ -304,7 +307,7 @@ public class PlayerService extends Service {
 			setState(STATE.Stopped);
 
 			Log.v(TAG, "Completion");
-			Song song = mPlaylist.playNext();
+			Song song = mPlaylist.playNextAutomatic();
 			if (song == null) {
 				stop();
 			}

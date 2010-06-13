@@ -23,8 +23,8 @@ package net.sileht.lullaby;
 import java.io.File;
 
 import net.sileht.lullaby.R;
-import net.sileht.lullaby.backend.PlayerService;
 import net.sileht.lullaby.objects.Song;
+import net.sileht.lullaby.player.PlayerService;
 
 import android.app.ActivityGroup;
 import android.content.ComponentName;

@@ -19,7 +19,7 @@ package net.sileht.lullaby;
  * | Boston, MA  02111-1307, USA.                                           |
  * +------------------------------------------------------------------------+
  */
-import net.sileht.lullaby.backend.PlayerService;
+import net.sileht.lullaby.player.PlayerService;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;

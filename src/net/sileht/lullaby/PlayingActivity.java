@@ -1,9 +1,9 @@
 package net.sileht.lullaby;
 
 import net.sileht.lullaby.R;
-import net.sileht.lullaby.backend.PlayerService;
-import net.sileht.lullaby.backend.PlayingPlaylist.REPEAT_MODE;
 import net.sileht.lullaby.objects.Song;
+import net.sileht.lullaby.player.PlayerService;
+import net.sileht.lullaby.player.PlayingPlaylist.REPEAT_MODE;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -64,6 +64,7 @@ public class PlayingActivity extends Activity {
 			mPlayer.mPlaylist.load(PlayingActivity.this);
 			setToggleButtonImage();
 			setRepeatButtonImage();
+			setPlayPauseButtonImage();
 		}
 
 		@Override
@@ -193,6 +194,14 @@ public class PlayingActivity extends Activity {
 		}
 	}
 
+	private void setPlayPauseButtonImage() {
+		if (mPlayer.isPlaying()) {
+			playpause.setImageResource(R.drawable.ic_media_pause);
+		} else {
+			playpause.setImageResource(R.drawable.ic_media_play);
+		}
+	}
+
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -249,12 +258,8 @@ public class PlayingActivity extends Activity {
 
 		@Override
 		public void onTogglePlaying(boolean playing) {
-			// mSeekbarEnabled = playing;
-			if (playing) {
-				playpause.setImageResource(android.R.drawable.ic_media_pause);
-			} else {
-				playpause.setImageResource(android.R.drawable.ic_media_play);
-			}
+			setPlayPauseButtonImage();
+
 		}
 	}
 

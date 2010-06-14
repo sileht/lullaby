@@ -189,7 +189,6 @@ public class AlbumActivity extends Activity {
 
 			String artist = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ARTIST));
-
 			String displayname = name;
 			boolean unknown = name == null;
 			if (unknown) {
@@ -211,6 +210,7 @@ public class AlbumActivity extends Activity {
 			String art = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ART));
 
+			final int index = cursor.getPosition();
 			vh.icon.setImageDrawable(null);
 			if (art != null && !art.equals("")) {
 				ArtworkAsyncHelper.updateArtwork(view.getContext(), vh.icon,
@@ -220,8 +220,9 @@ public class AlbumActivity extends Activity {
 							@Override
 							public void onImageLoadComplete(int token,
 									ImageView iView, boolean imagePresent) {
-								notifyDataSetChanged();
-
+								Cursor c = getCursor();
+								c.moveToPosition(index);
+								c.requery();
 							}
 						});
 			}

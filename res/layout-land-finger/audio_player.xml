@@ -49,8 +49,7 @@
         android:layout_height="fill_parent"
         android:layout_weight="1"
         android:orientation="horizontal"
-	android:gravity="center">>
-
+	android:gravity="center">
         <ImageView
             android:id="@+id/album"
             android:background="@drawable/album_border_small"

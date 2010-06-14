@@ -115,32 +115,33 @@ public class PlayerService extends Service {
 	}
 
 	private void setState(STATE state) {
-		
-		boolean previousPlayingState = isPlaying();
-		
-		mState = state;
-		
-		if (isPlaying() != previousPlayingState) {
-			for (PlayerListener obj : mPlayerListeners) {
-				obj.onTogglePlaying(isPlaying());
-			}
-			RemoteViews views = new RemoteViews(this.getPackageName(),
-					R.layout.statusbar);
-			views.setImageViewResource(R.id.icon, R.drawable.status_icon);
-			views.setTextViewText(R.id.trackname, mSong.name);
-			views.setTextViewText(R.id.artistalbum, mSong.album + " - "
-					+ mSong.artist);
 
-			Notification n = new Notification();
-			n.icon = R.drawable.status_icon;
-			n.tickerText = "Playing " + mSong.name;
-			n.flags |= Notification.FLAG_ONGOING_EVENT;
-			n.contentView = views;
-			n.contentIntent = PendingIntent.getActivity(this, 0,
-					new Intent(this, PlayingActivity.class), 0);
-			startForeground(1, n);
-		} else {
-			stopForeground(true);
+		boolean previousPlayingState = isPlaying();
+
+		mState = state;
+		if (mSong != null) {
+			if (isPlaying() != previousPlayingState) {
+				for (PlayerListener obj : mPlayerListeners) {
+					obj.onTogglePlaying(isPlaying());
+				}
+				RemoteViews views = new RemoteViews(this.getPackageName(),
+						R.layout.statusbar);
+				views.setImageViewResource(R.id.icon, R.drawable.status_icon);
+				views.setTextViewText(R.id.trackname, mSong.name);
+				views.setTextViewText(R.id.artistalbum, mSong.album + " - "
+						+ mSong.artist);
+
+				Notification n = new Notification();
+				n.icon = R.drawable.status_icon;
+				n.tickerText = "Playing " + mSong.name;
+				n.flags |= Notification.FLAG_ONGOING_EVENT;
+				n.contentView = views;
+				n.contentIntent = PendingIntent.getActivity(this, 0,
+						new Intent(this, PlayingActivity.class), 0);
+				startForeground(1, n);
+			} else {
+				stopForeground(true);
+			}
 		}
 
 		String st = "";
@@ -180,15 +181,15 @@ public class PlayerService extends Service {
 	public int getBuffer() {
 		return mBuffering;
 	}
-	
-	public Song getSong(){
+
+	public Song getSong() {
 		return mSong;
 	}
 
 	protected void playSong(Song song) {
-		
+
 		Lullaby.comm.ping();
-		
+
 		setState(STATE.Idle);
 
 		String uri = song.url.replaceFirst(".ogg$", ".mp3").replaceFirst(
@@ -233,7 +234,7 @@ public class PlayerService extends Service {
 		} else if (mState == STATE.Prepared) {
 			mPlayer.start();
 			setState(STATE.Started);
-		} else { 
+		} else {
 			mPlaylist.playNextAutomatic();
 		}
 	}
@@ -307,9 +308,9 @@ public class PlayerService extends Service {
 
 		@Override
 		public void onCompletion(MediaPlayer mp) {
-			mSong = null;
 			mPlayer.stop();
 			setState(STATE.Stopped);
+			mSong = null;
 
 			Log.v(TAG, "Completion");
 			Song song = mPlaylist.playNextAutomatic();

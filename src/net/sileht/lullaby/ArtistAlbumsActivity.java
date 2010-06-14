@@ -167,6 +167,7 @@ public class ArtistAlbumsActivity extends Activity {
 			TextView line2;
 			ImageView play_indicator;
 			ImageView icon;
+			int index;
 		}
 
 		public ArtistAlbumsAdapter(Context context,
@@ -349,7 +350,8 @@ public class ArtistAlbumsActivity extends Activity {
 			// we just use it to see if there is album art or not
 			String art = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ART));
-
+			final Cursor c = cursor;
+			final int index = cursor.getPosition();
 			vh.icon.setImageDrawable(null);
 			if (art != null && !art.equals("")) {
 				ArtworkAsyncHelper.updateArtwork(view.getContext(), vh.icon,
@@ -359,7 +361,9 @@ public class ArtistAlbumsActivity extends Activity {
 							@Override
 							public void onImageLoadComplete(int token,
 									ImageView iView, boolean imagePresent) {
-								notifyDataSetChanged();
+								// notifyDataSetChanged();
+								c.moveToPosition(index);
+								c.requery();
 
 							}
 						});

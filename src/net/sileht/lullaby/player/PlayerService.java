@@ -115,12 +115,15 @@ public class PlayerService extends Service {
 	}
 
 	private void setState(STATE state) {
+		
+		boolean previousPlayingState = isPlaying();
+		
 		mState = state;
-
-		for (PlayerListener obj : mPlayerListeners) {
-			obj.onTogglePlaying(isPlaying());
-		}
-		if (isPlaying()) {
+		
+		if (isPlaying() != previousPlayingState) {
+			for (PlayerListener obj : mPlayerListeners) {
+				obj.onTogglePlaying(isPlaying());
+			}
 			RemoteViews views = new RemoteViews(this.getPackageName(),
 					R.layout.statusbar);
 			views.setImageViewResource(R.id.icon, R.drawable.status_icon);

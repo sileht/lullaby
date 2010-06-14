@@ -30,6 +30,7 @@ import android.os.Parcel;
 
 public class Album extends ampacheObject {
     public String artist = "";
+    public String artist_id = "";
     public String tracks = "";
     public String extra = null;
     public String art = null;
@@ -65,12 +66,14 @@ public class Album extends ampacheObject {
         super.writeToParcel(out, flags);
         out.writeString(artist);
         out.writeString(tracks);
+        out.writeString(artist_id);
     }
 
     public Album(Parcel in) {
         super.readFromParcel(in);
         artist = in.readString();
         tracks = in.readString();
+        artist_id = in.readString();
     }
 
     @SuppressWarnings("unchecked")
@@ -93,7 +96,8 @@ public class Album extends ampacheObject {
         artist = (String) in.readObject();
         art = (String) in.readObject();
         tracks = (String) in.readObject();
-        extra = (String) in.readObject();		
+        extra = (String) in.readObject();	
+        artist_id = (String) in.readObject();		
 	}
 
 	@Override
@@ -103,6 +107,7 @@ public class Album extends ampacheObject {
         out.writeObject(artist);
         out.writeObject(art);
         out.writeObject(tracks);
-        out.writeObject(extra);		
+        out.writeObject(extra);
+        out.writeObject(artist_id);		
 	}
 }

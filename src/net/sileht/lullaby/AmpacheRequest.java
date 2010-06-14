@@ -28,11 +28,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
-import net.sileht.lullaby.R;
-
+import net.sileht.lullaby.objects.Album;
 import android.app.Activity;
 import android.content.Context;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
@@ -49,9 +47,6 @@ public abstract class AmpacheRequest extends Handler {
 	protected boolean mQuick;
 
 	private ArrayList<Object> mCachedData;
-
-	private static boolean mExternalStorageAvailable = false;
-	private static boolean mExternalStorageWriteable = false;
 
 	private boolean stop = false;
 
@@ -78,42 +73,25 @@ public abstract class AmpacheRequest extends Handler {
 		stop = true;
 	}
 
+	private String getCacheFilePath(String filename) {
+		return Utils.getCacheFile(filename).getPath();
+	}
+
 	private String getCacheFilePath() {
 		String filename = mDirective[0];
 		if (!mDirective[1].equals("")) {
 			filename += "-" + mDirective[1];
 		}
-		File f = new File(Environment.getExternalStorageDirectory(),
-				"Android/data/com.sileht.lullaby/cache");
-		f.mkdirs();
-		return f.getPath() + "/"  + filename;
-	}
-	
-	static private void checkStorage() {
-		String state = Environment.getExternalStorageState();
-
-		if (Environment.MEDIA_MOUNTED.equals(state)) {
-			// We can read and write the media
-			AmpacheRequest.mExternalStorageAvailable = AmpacheRequest.mExternalStorageWriteable = true;
-		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-			// We can only read the media
-			AmpacheRequest.mExternalStorageAvailable = true;
-			AmpacheRequest.mExternalStorageWriteable = false;
-		} else {
-			// Something else is wrong. It may be one of many other states, but
-			// all we need
-			// to know is we can neither read nor write
-			AmpacheRequest.mExternalStorageAvailable = AmpacheRequest.mExternalStorageWriteable = false;
-		}
+		return getCacheFilePath(filename);
 	}
 
 	private boolean writeCache() {
-		
-		checkStorage();
-		if (!mExternalStorageWriteable) {
+
+		Utils.checkStorage();
+		if (!Utils.mExternalStorageWriteable) {
 			return false;
 		}
-		
+
 		Log.d(TAG, "Writing cache start...");
 
 		String cacheFilePath = getCacheFilePath();
@@ -141,18 +119,49 @@ public abstract class AmpacheRequest extends Handler {
 		return true;
 	}
 
-	@SuppressWarnings("unchecked")
 	private boolean readCache() {
+		boolean ret = false;
+		// Quick hack if albums cache if present
+		if (mDirective[0] == "artist_albums") {
+			ret = readCache("albums");
+			if (ret) {
+				ArrayList<Object> nlist = new ArrayList<Object>();
+				for (Object o : mCachedData) {
+					Album a = (Album) o;
+					if (a.artist_id.equals(mDirective[1])) {
+						nlist.add((Object) a);
+					}
+				}
+				mCachedData = nlist;
+				// writeCache();
+			} else {
+				ret = readCache(null);
+			}
+		} else {
+			ret = readCache(null);
+		}
+		return ret;
+	}
 
-		checkStorage();
-		if (!mExternalStorageAvailable) {
+	@SuppressWarnings("unchecked")
+	private boolean readCache(String filename) {
+
+		Utils.checkStorage();
+		if (!Utils.mExternalStorageAvailable) {
 			return false;
 		}
 
 		Log.d(TAG, "Reading cache start...");
-		
+
 		mCachedData = new ArrayList<Object>();
-		String cacheFilePath = getCacheFilePath();
+
+		String cacheFilePath = null;
+		if (filename == null) {
+			cacheFilePath = getCacheFilePath();
+		} else {
+			cacheFilePath = getCacheFilePath(filename);
+		}
+
 		FileInputStream fis;
 
 		try {
@@ -161,7 +170,7 @@ public abstract class AmpacheRequest extends Handler {
 			Log.d(TAG, "Reading cache not exists.");
 			return false;
 		}
-		
+
 		Log.d(TAG, "Reading cache...");
 		try {
 			ObjectInputStream ois = new ObjectInputStream(fis);
@@ -177,6 +186,7 @@ public abstract class AmpacheRequest extends Handler {
 			return false;
 		}
 		Log.d(TAG, "Reading cache done.");
+
 		return true;
 	}
 

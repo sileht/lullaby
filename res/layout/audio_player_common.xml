@@ -23,7 +23,8 @@
         android:paddingTop="1dip"
         android:paddingBottom="0dip"
         android:orientation="horizontal"
-	android:gravity="center">
+		android:gravity="center"
+		>
 
         <LinearLayout
             android:layout_width="wrap_content"

@@ -107,7 +107,7 @@ public class AlbumActivity extends Activity {
 		private AlphabetIndexer mIndexer;
 		private Resources mRessource;
 		private Cursor mCursor;
-		
+
 		private static int mArtworkWidth = -1;
 		private static int mArtWorkHeight = -1;
 
@@ -125,14 +125,14 @@ public class AlbumActivity extends Activity {
 			mCursor = cursor;
 			mRessource = context.getResources();
 
-
 			if (mArtworkWidth < 0) {
-				Bitmap icon = ((BitmapDrawable) mRessource.getDrawable(
-						R.drawable.albumart_mp_unknown_list)).getBitmap();
+				Bitmap icon = ((BitmapDrawable) mRessource
+						.getDrawable(R.drawable.albumart_mp_unknown_list))
+						.getBitmap();
 				mArtworkWidth = icon.getWidth();
 				mArtWorkHeight = icon.getHeight();
 			}
-			
+
 			mIndexer = new AlphabetIndexer(mCursor, mCursor
 					.getColumnIndex(ViewUtils.ALBUM_NAME), mRessource
 					.getString(R.string.fast_scroll_numeric_alphabet));
@@ -211,10 +211,10 @@ public class AlbumActivity extends Activity {
 			String art = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ART));
 
-			if (art != null & art.length() != 0) {
+			vh.icon.setImageDrawable(null);
+			if (art != null && !art.equals("")) {
 				ArtworkAsyncHelper.updateArtwork(view.getContext(), vh.icon,
-						art, R.drawable.albumart_mp_unknown_list,
-						mArtworkWidth, mArtWorkHeight,
+						art, -1, mArtworkWidth, mArtWorkHeight, true,
 						new ArtworkAsyncHelper.OnImageLoadCompleteListener() {
 
 							@Override

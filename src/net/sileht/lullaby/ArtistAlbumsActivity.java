@@ -102,19 +102,18 @@ public class ArtistAlbumsActivity extends Activity {
 
 	}
 
-
 	@Override
 	protected void onStart() {
 		super.onStart();
 		mViewUtils.onStart();
 	}
-	
+
 	@Override
-	protected void onStop(){
+	protected void onStop() {
 		mViewUtils.onStop();
 		super.onStop();
 	}
-	
+
 	private class AlbumClickListener implements
 			ExpandableListView.OnChildClickListener,
 			ExpandableListView.OnGroupExpandListener {
@@ -155,22 +154,21 @@ public class ArtistAlbumsActivity extends Activity {
 
 		private static int mArtworkWidth = -1;
 		private static int mArtWorkHeight = -1;
-		
+
 		private final StringBuilder mBuffer = new StringBuilder();
 		private final ArtistAlbumsActivity mCurrentActivity;
 
 		private AlphabetIndexer mIndexer;
-        private Resources mRessource;
-        private Cursor mCursor;
+		private Resources mRessource;
+		private Cursor mCursor;
 
+		static class ViewHolder {
+			TextView line1;
+			TextView line2;
+			ImageView play_indicator;
+			ImageView icon;
+		}
 
-    	static class ViewHolder {
-    		TextView line1;
-    		TextView line2;
-    		ImageView play_indicator;
-    		ImageView icon;
-    	}
-    	
 		public ArtistAlbumsAdapter(Context context,
 				ArtistAlbumsActivity currentactivity, Cursor cursor,
 				int glayout, String[] gfrom, int[] gto, int clayout,
@@ -183,32 +181,35 @@ public class ArtistAlbumsActivity extends Activity {
 			mCurrentActivity = currentactivity;
 
 			if (mArtworkWidth < 0) {
-				Bitmap icon = ((BitmapDrawable) mRessource.getDrawable(
-						R.drawable.albumart_mp_unknown_list)).getBitmap();
+				Bitmap icon = ((BitmapDrawable) mRessource
+						.getDrawable(R.drawable.albumart_mp_unknown_list))
+						.getBitmap();
 				mArtworkWidth = icon.getWidth();
 				mArtWorkHeight = icon.getHeight();
 			}
-			
+
 			mIndexer = new AlphabetIndexer(mCursor, mCursor
 					.getColumnIndex(ViewUtils.ARTIST_NAME), mRessource
 					.getString(R.string.fast_scroll_numeric_alphabet));
-			
+
 			setFilterQueryProvider(new FilterQueryProvider() {
 				@Override
 				public Cursor runQuery(CharSequence text) {
-					MatrixCursor nc = new MatrixCursor(ViewUtils.mArtistColumnName);
+					MatrixCursor nc = new MatrixCursor(
+							ViewUtils.mArtistColumnName);
 					mCursor.moveToFirst();
 					do {
-						if ( mCursor.getString(1).startsWith((String) text)){
+						if (mCursor.getString(1).startsWith((String) text)) {
 							MatrixCursor.RowBuilder rb = nc.newRow();
-							for (int i = 0; i < mCursor.getColumnCount(); i++){
+							for (int i = 0; i < mCursor.getColumnCount(); i++) {
 								rb = rb.add(mCursor.getString(i));
 							}
 						}
 					} while (mCursor.moveToNext());
 
-					mIndexer = new AlphabetIndexer(nc, nc.getColumnIndex(ViewUtils.ARTIST_NAME), 
-							mRessource.getString(R.string.fast_scroll_numeric_alphabet));
+					mIndexer = new AlphabetIndexer(nc, nc
+							.getColumnIndex(ViewUtils.ARTIST_NAME), mRessource
+							.getString(R.string.fast_scroll_numeric_alphabet));
 					return nc;
 				}
 			});
@@ -280,8 +281,9 @@ public class ArtistAlbumsActivity extends Activity {
 			vh.line2 = (TextView) v.findViewById(R.id.line2);
 			vh.play_indicator = (ImageView) v.findViewById(R.id.play_indicator);
 			vh.icon = (ImageView) v.findViewById(R.id.icon);
+			vh.icon.setBackgroundResource(R.drawable.albumart_mp_unknown_list);
 			vh.icon.setPadding(0, 0, 1, 0);
-			vh.icon.setImageResource(R.drawable.albumart_mp_unknown_list);
+			vh.icon.setImageDrawable(null);
 			v.setTag(vh);
 			return v;
 		}
@@ -312,12 +314,6 @@ public class ArtistAlbumsActivity extends Activity {
 			vh.line2.setText(songs_albums);
 
 			vh.play_indicator.setImageDrawable(null);
-			/*
-			 * long currentartistid = 0; long artistid = cursor.getLong(0); if
-			 * (currentartistid == artistid && !isexpanded) {
-			 * vh.play_indicator.setImageDrawable(mNowPlayingOverlay); } else {
-			 * vh.play_indicator.setImageDrawable(null); }
-			 */
 		}
 
 		@Override
@@ -349,19 +345,15 @@ public class ArtistAlbumsActivity extends Activity {
 
 			vh.line2.setText(builder.toString());
 
-			ImageView iv = vh.icon;
-
 			// We don't actually need the path to the thumbnail file,
 			// we just use it to see if there is album art or not
 			String art = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ART));
 
-			if (art == null || art.length() == 0) {
-				iv.setImageResource(R.drawable.albumart_mp_unknown_list);
-			} else {
+			vh.icon.setImageDrawable(null);
+			if (art != null && !art.equals("")) {
 				ArtworkAsyncHelper.updateArtwork(view.getContext(), vh.icon,
-						art, R.drawable.albumart_mp_unknown_list,
-						mArtworkWidth, mArtWorkHeight,
+						art, -1, mArtworkWidth, mArtWorkHeight, true,
 						new ArtworkAsyncHelper.OnImageLoadCompleteListener() {
 
 							@Override
@@ -373,16 +365,6 @@ public class ArtistAlbumsActivity extends Activity {
 						});
 
 			}
-
-			/*
-			 * long currentalbumid = MusicUtils.getCurrentAlbumId(); long aid =
-			 * cursor.getLong(0);
-			 * 
-			 * iv = vh.play_indicator; if (currentalbumid == aid) {
-			 * iv.setImageDrawable(mNowPlayingOverlay); } else {
-			 * 
-			 * iv.setImageDrawable(null); }
-			 */
 			vh.play_indicator.setImageDrawable(null);
 		}
 

@@ -30,10 +30,10 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
+import android.gesture.GestureOverlayView;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.IBinder;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -43,7 +43,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.GestureDetector.SimpleOnGestureListener;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TabHost;
@@ -62,14 +61,14 @@ public class MainActivity extends ActivityGroup {
 
 	private GestureDetector gestureDetector;
 	private View.OnTouchListener gestureListener;
-	
+
 	private TextView line1;
 	private TextView line2;
 	private ImageButton playpause;
 	private ImageView artwork;
-	private FrameLayout bottombar;
+	private GestureOverlayView bottombar;
 
-	//private static final String TAG = "LullabyMainActivity";
+	// private static final String TAG = "LullabyMainActivity";
 
 	// Bind Service Player
 	private PlayerService mPlayer;
@@ -145,20 +144,6 @@ public class MainActivity extends ActivityGroup {
 		line1 = (TextView) findViewById(R.id.line1);
 		line2 = (TextView) findViewById(R.id.line2);
 
-		gestureDetector = new GestureDetector(new MyGestureDetector());
-		gestureListener = new View.OnTouchListener() {
-			public boolean onTouch(View v, MotionEvent event) {
-				if (gestureDetector.onTouchEvent(event)) {
-					return true;
-				}
-				return false;
-			}
-		};
-
-		bottombar = (FrameLayout) findViewById(R.id.bottombar);
-		bottombar.setOnTouchListener(gestureListener);
-		tabHost.setOnTouchListener(gestureListener);
-
 		artwork = (ImageView) findViewById(R.id.icon);
 		artwork.setImageResource(R.drawable.albumart_mp_unknown_list);
 
@@ -170,15 +155,26 @@ public class MainActivity extends ActivityGroup {
 			}
 		});
 
-		((FrameLayout) findViewById(R.id.bottombar))
-				.setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						Intent i = new Intent();
-						i.setClass(v.getContext(), PlayingActivity.class);
-						startActivity(i);
-					}
-				});
+		gestureDetector = new GestureDetector(new MyGestureDetector());
+		gestureListener = new View.OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				if (gestureDetector.onTouchEvent(event)) {
+					return true;
+				}
+				return false;
+			}
+		};
+
+		bottombar = (GestureOverlayView) findViewById(R.id.bottombar);
+		bottombar.setOnTouchListener(gestureListener);
+		bottombar.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent i = new Intent();
+				i.setClass(v.getContext(), PlayingActivity.class);
+				startActivity(i);
+			}
+		});
 
 	}
 
@@ -252,8 +248,7 @@ public class MainActivity extends ActivityGroup {
 				mPlayer.mPlaylist.load(this);
 			break;
 		case MENU_CLEARCACHE:
-			File root = new File(Environment.getExternalStorageDirectory(),
-					"Android/data/com.sileht.lullaby/cache");
+			File root = Utils.getCacheRootDir();
 			for (File f : root.listFiles()) {
 				f.delete();
 			}
@@ -320,7 +315,7 @@ public class MainActivity extends ActivityGroup {
 			if (mSong != null) {
 				ArtworkAsyncHelper.updateArtwork(MainActivity.this, artwork,
 						mSong.art, R.drawable.albumart_mp_unknown_list,
-						mArtworkWidth, mArtWorkHeight);
+						mArtworkWidth, mArtWorkHeight, false);
 			}
 		}
 

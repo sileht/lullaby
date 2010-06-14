@@ -505,6 +505,9 @@ public class AmpacheBackend extends HandlerThread {
 				current = new Album();
 				current.id = attr.getValue("id");
 			}
+			if (localName.equals("artist")) {
+				current.artist_id = attr.getValue("id");
+			}
 		}
 
 		public void endElement(String namespaceURI, String localName,

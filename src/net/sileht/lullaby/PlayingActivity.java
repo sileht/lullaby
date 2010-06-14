@@ -34,7 +34,7 @@ public class PlayingActivity extends Activity {
 	private static final int SWIPE_MAX_OFF_PATH = 300;
 	private static final int SWIPE_MIN_DISTANCE = 120;
 	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
-	
+
 	private static int mArtworkWidth = -1;
 	private static int mArtWorkHeight = -1;
 
@@ -51,6 +51,7 @@ public class PlayingActivity extends Activity {
 	private ImageButton previous;
 	private ImageButton repeat;
 	private ImageButton shuffle;
+	private ImageButton curplaylist;
 
 	private GestureDetector gestureDetector;
 	private View.OnTouchListener gestureListener;
@@ -98,17 +99,23 @@ public class PlayingActivity extends Activity {
 		mArtistName = (TextView) findViewById(R.id.artistname);
 		mAlbumName = (TextView) findViewById(R.id.albumname);
 
-		artwork = (ImageView) findViewById(R.id.curplaylist);
+		artwork = (ImageView) findViewById(R.id.album);
 		artwork.setImageResource(R.drawable.albumart_mp_unknown);
-		artwork.setOnClickListener(new View.OnClickListener() {
+
+		curplaylist = (ImageButton) findViewById(R.id.curplaylist);
+		curplaylist.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				Intent i = new Intent();
+				i.setClass(v.getContext(), MainActivity.class);
+				startActivityFromChild((Activity) PlayingActivity.this, i, 0);
 				finish();
 			}
 		});
 
 		mTimeView = (TextView) findViewById(R.id.currenttime);
 		mDurationView = (TextView) findViewById(R.id.totaltime);
+		
 		mProgress = (SeekBar) findViewById(android.R.id.progress);
 		mProgress.setMax(1000);
 		mProgress.setProgress(0);
@@ -244,7 +251,7 @@ public class PlayingActivity extends Activity {
 			if (mSong != null) {
 				ArtworkAsyncHelper.updateArtwork(PlayingActivity.this, artwork,
 						mSong.art, R.drawable.albumart_mp_unknown,
-						mArtworkWidth, mArtWorkHeight);
+						mArtworkWidth, mArtWorkHeight, false);
 			}
 		}
 

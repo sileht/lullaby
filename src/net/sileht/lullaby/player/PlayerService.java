@@ -242,7 +242,7 @@ public class PlayerService extends Service {
 			mPlayer.stop();
 		}
 
-		mPlayAfterPrepared = true;
+		mPlayAfterPrepared = startPlaying;
 		mSong = song;
 
 		updateBuffer(-1);

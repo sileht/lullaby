@@ -191,12 +191,17 @@ public abstract class AmpacheRequest extends Handler {
 	}
 
 	public void send() {
-		if (readCache()) {
+		send(1);
+	}
+
+	public void send(int userCache) {
+		if (userCache == 1 && readCache()) {
 			add_objects(mCachedData);
 		} else {
 			Message requestMsg = new Message();
 			requestMsg.what = 1;
 			requestMsg.arg1 = 0;
+			requestMsg.arg2 = userCache;
 			requestMsg.obj = mDirective;
 			requestMsg.replyTo = new Messenger(this);
 			Log.d(TAG, "Request send for " + mDirective[0]);
@@ -234,7 +239,9 @@ public abstract class AmpacheRequest extends Handler {
 			return;
 		switch (msg.what) {
 		case 1:
-			mCachedData.addAll((ArrayList<Object>) msg.obj);
+			if (msg.arg2 == 1) {
+				mCachedData.addAll((ArrayList<Object>) msg.obj);
+			}
 			add_objects((ArrayList<?>) msg.obj);
 
 			/* queue up the next inc */
@@ -248,7 +255,9 @@ public abstract class AmpacheRequest extends Handler {
 
 				showProgress();
 			} else {
-				writeCache();
+				if (msg.arg2 == 1) {
+					writeCache();
+				}
 				hideProgress();
 			}
 			break;

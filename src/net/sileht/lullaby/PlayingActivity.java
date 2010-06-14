@@ -126,7 +126,7 @@ public class PlayingActivity extends Activity {
 		playpause.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				mPlayer.doPauseResume();
+				mPlayer.doPlaybackPauseResume();
 			}
 		});
 		next = (ImageButton) findViewById(R.id.next);
@@ -347,7 +347,7 @@ public class PlayingActivity extends Activity {
 						+ Utils.stringForTime(preloaded));
 				if (seek <= preloaded) {
 					Log.d(TAG, "Seeking to " + Utils.stringForTime(seek));
-					mPlayer.seekTo(seek);
+					mPlayer.doSeekTo(seek);
 				}
 			}
 		}

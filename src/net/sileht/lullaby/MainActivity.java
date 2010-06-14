@@ -36,7 +36,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.GestureDetector;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -151,7 +150,7 @@ public class MainActivity extends ActivityGroup {
 		playpause.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				mPlayer.doPauseResume();
+				mPlayer.doPlaybackPauseResume();
 			}
 		});
 
@@ -255,8 +254,9 @@ public class MainActivity extends ActivityGroup {
 			root.delete();
 			return true;
 		case MENU_EXIT:
-			mPlayer.stop();
-			stopService(new Intent(this, PlayerService.class));
+			mPlayer.doPlaybackStop();
+			mPlayer.stopSelf();
+			onDestroy();
 			finish();
 			return true;
 		default:
@@ -275,16 +275,16 @@ public class MainActivity extends ActivityGroup {
 		return true;
 	}
 
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (keyCode == KeyEvent.KEYCODE_BACK) {
+	// @Override
+	// public boolean onKeyDown(int keyCode, KeyEvent event) {
+	// if (keyCode == KeyEvent.KEYCODE_BACK) {
 
-			finish();
-			return super.onKeyDown(keyCode, event);
+	// finish();
+	// return super.onKeyDown(keyCode, event);
 
-		}
-		return false;
-	}
+	// }
+	// return false;
+	// }
 
 	private class MyPlayerListener extends PlayerService.PlayerListener {
 

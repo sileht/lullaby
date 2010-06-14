@@ -64,7 +64,7 @@ public class PlaylistsActivity extends Activity {
 			playlistsData = new MatrixCursor(ViewUtils.mPlaylistsColumnName);
 			startManagingCursor(playlistsData);
 
-			AmpacheRequest request = new AmpacheRequest((Activity) this,
+			AmpacheRequest request = new AmpacheRequest(this,
 					new String[] { "playlists", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override

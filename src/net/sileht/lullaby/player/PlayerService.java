@@ -23,6 +23,7 @@ package net.sileht.lullaby.player;
  */
 import java.util.ArrayList;
 
+import net.sileht.lullaby.AmpacheRequest;
 import net.sileht.lullaby.Lullaby;
 import net.sileht.lullaby.PlayingActivity;
 import net.sileht.lullaby.R;
@@ -32,6 +33,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -46,6 +48,8 @@ public class PlayerService extends Service {
 	private MediaPlayer mPlayer;
 
 	private static String TAG = "LullabyPlayer";
+	private static String PREFS_NAME = "LullabyPlayerService";
+
 	private Song mSong;
 	private int mBuffering = -1;
 
@@ -99,6 +103,24 @@ public class PlayerService extends Service {
 
 		setState(STATE.Idle);
 
+		SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME,
+				MODE_PRIVATE);
+		String id = settings.getString("song_id", null);
+		
+		if (id != null && !id.equals("")) {
+			AmpacheRequest request = new AmpacheRequest(null, new String[] {
+					"song", id }) {
+				@SuppressWarnings("unchecked")
+				@Override
+				public void add_objects(ArrayList list) {
+					if (!list.isEmpty() && mSong == null) {
+						prepareSong((Song) list.get(0), false);
+					}
+				}
+			};
+			request.send(0);
+		}
+
 		Log.v(TAG, "Lullaby Player Service Start");
 	}
 
@@ -112,6 +134,17 @@ public class PlayerService extends Service {
 	@Override
 	public void onDestroy() {
 		stopForeground(true);
+		Context ctx = getApplicationContext();
+		SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME,
+				MODE_PRIVATE);
+		SharedPreferences.Editor editor = settings.edit();
+		if (mSong != null) {
+			editor.putString("song_id", mSong.id);
+		} else {
+			editor.putString("song_id", null);
+		}
+		editor.commit();
+		Log.v(TAG, "DestroyService");
 	}
 
 	private void setState(STATE state) {
@@ -195,9 +228,7 @@ public class PlayerService extends Service {
 		return mSong;
 	}
 
-	protected void playSong(Song song) {
-
-		Lullaby.comm.ping();
+	private void prepareSong(Song song, boolean startPlaying) {
 
 		setState(STATE.Idle);
 
@@ -213,6 +244,7 @@ public class PlayerService extends Service {
 
 		mPlayAfterPrepared = true;
 		mSong = song;
+
 		updateBuffer(-1);
 
 		for (PlayerListener obj : mPlayerListeners) {
@@ -229,7 +261,12 @@ public class PlayerService extends Service {
 		}
 	}
 
-	public void doPauseResume() {
+	protected void playSong(Song song) {
+		Lullaby.comm.ping();
+		prepareSong(song, true);
+	}
+
+	public void doPlaybackPauseResume() {
 		if (mState == STATE.Started || mState == STATE.Paused) {
 			if (mPlayer.isPlaying()) {
 				mPlayer.pause();
@@ -248,7 +285,16 @@ public class PlayerService extends Service {
 		}
 	}
 
-	public void seekTo(int position) {
+	public void doPlaybackStop() {
+		for (PlayerListener obj : mPlayerListeners) {
+			obj.onPlayerStopped();
+		}
+		setState(STATE.Stopped);
+		mPlayer.stop();
+		mPlayer.reset();
+	}
+
+	public void doSeekTo(int position) {
 		if (mState == STATE.Prepared || mState == STATE.Started
 				|| mState == STATE.Paused) {
 			mPlayer.seekTo(position);
@@ -311,6 +357,9 @@ public class PlayerService extends Service {
 			if (mPlayAfterPrepared) {
 				mPlayer.start();
 				setState(STATE.Started);
+			} else {
+				mPlayer.pause();
+				setState(STATE.Paused);
 			}
 			mPlayAfterPrepared = true;
 		}
@@ -324,7 +373,7 @@ public class PlayerService extends Service {
 			Log.v(TAG, "Completion");
 			Song song = mPlaylist.playNextAutomatic();
 			if (song == null) {
-				stop();
+				doPlaybackStop();
 			}
 		}
 
@@ -332,15 +381,6 @@ public class PlayerService extends Service {
 		public void onBufferingUpdate(MediaPlayer mp, int buffer) {
 			updateBuffer(buffer);
 		}
-	}
-
-	public void stop() {
-		for (PlayerListener obj : mPlayerListeners) {
-			obj.onPlayerStopped();
-		}
-		setState(STATE.Stopped);
-		mPlayer.stop();
-		mPlayer.reset();
 	}
 
 	// Handle phone calls

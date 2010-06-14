@@ -72,7 +72,7 @@ public class AlbumActivity extends Activity {
 			albumsData = new MatrixCursor(ViewUtils.mAlbumsColumnName);
 			startManagingCursor(albumsData);
 
-			AmpacheRequest request = new AmpacheRequest((Activity) this,
+			AmpacheRequest request = new AmpacheRequest(this,
 					new String[] { "albums", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override

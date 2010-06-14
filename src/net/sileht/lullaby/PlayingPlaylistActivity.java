@@ -126,7 +126,6 @@ public class PlayingPlaylistActivity extends ListActivity implements
 			}
 		}
 		return super.onContextItemSelected(item);
-
 	}
 
 	@Override

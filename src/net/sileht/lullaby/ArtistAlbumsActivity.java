@@ -84,7 +84,7 @@ public class ArtistAlbumsActivity extends Activity {
 
 			mAdapter = getNewAdapter();
 
-			AmpacheRequest request = new AmpacheRequest((Activity) this,
+			AmpacheRequest request = new AmpacheRequest(this,
 					new String[] { "artists", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override
@@ -240,7 +240,7 @@ public class ArtistAlbumsActivity extends Activity {
 				mCurrentActivity.albumsData.put(id, cur);
 
 				AmpacheRequest request = new AmpacheRequest(
-						(Activity) mCurrentActivity, new String[] {
+						mCurrentActivity, new String[] {
 								"artist_albums", id }) {
 					@SuppressWarnings("unchecked")
 					@Override

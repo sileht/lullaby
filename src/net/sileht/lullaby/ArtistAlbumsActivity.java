@@ -21,6 +21,8 @@ package net.sileht.lullaby;
  */
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import net.sileht.lullaby.R;
 import net.sileht.lullaby.backend.ArtworkAsyncHelper;
@@ -150,7 +152,7 @@ public class ArtistAlbumsActivity extends Activity {
 	}
 
 	static class ArtistAlbumsAdapter extends SimpleCursorTreeAdapter implements
-			SectionIndexer {
+			SectionIndexer, FilterQueryProvider {
 
 		private static int mArtworkWidth = -1;
 		private static int mArtWorkHeight = -1;
@@ -189,31 +191,36 @@ public class ArtistAlbumsActivity extends Activity {
 				mArtWorkHeight = icon.getHeight();
 			}
 
+			setFilterQueryProvider(this);
 			mIndexer = new AlphabetIndexer(mCursor, mCursor
 					.getColumnIndex(ViewUtils.ARTIST_NAME), mRessource
 					.getString(R.string.fast_scroll_numeric_alphabet));
+		}
 
-			setFilterQueryProvider(new FilterQueryProvider() {
+		/**
+		 * Reload data to view cover only after a certain period and prevent
+		 * reloading to much list for displaying a cover
+		 */
+		private final static long ARTWORK_RELOAD_PERIOD = 3000;
+		private TimerTask mTimerTask = null;
+
+		private void reloadArtworkIfNeeded() {
+			if (mTimerTask != null)
+				mTimerTask.cancel();
+			mTimerTask = new TimerTask() {
 				@Override
-				public Cursor runQuery(CharSequence text) {
-					MatrixCursor nc = new MatrixCursor(
-							ViewUtils.mArtistColumnName);
-					mCursor.moveToFirst();
-					do {
-						if (mCursor.getString(1).startsWith((String) text)) {
-							MatrixCursor.RowBuilder rb = nc.newRow();
-							for (int i = 0; i < mCursor.getColumnCount(); i++) {
-								rb = rb.add(mCursor.getString(i));
-							}
-						}
-					} while (mCursor.moveToNext());
-
-					mIndexer = new AlphabetIndexer(nc, nc
-							.getColumnIndex(ViewUtils.ARTIST_NAME), mRessource
-							.getString(R.string.fast_scroll_numeric_alphabet));
-					return nc;
+				public void run() {
+					Log.d(TAG, "Reload DataSet to show artwork");
+					notifyDataSetChanged();
 				}
-			});
+			};
+
+			(new Timer()).schedule(mTimerTask, ARTWORK_RELOAD_PERIOD);
+		}
+
+		@Override
+		public boolean hasStableIds() {
+			return true;
 		}
 
 		@Override
@@ -350,8 +357,7 @@ public class ArtistAlbumsActivity extends Activity {
 			// we just use it to see if there is album art or not
 			String art = cursor.getString(cursor
 					.getColumnIndexOrThrow(ViewUtils.ALBUM_ART));
-			final Cursor c = cursor;
-			final int index = cursor.getPosition();
+
 			vh.icon.setImageDrawable(null);
 			if (art != null && !art.equals("")) {
 				ArtworkAsyncHelper.updateArtwork(view.getContext(), vh.icon,
@@ -361,10 +367,7 @@ public class ArtistAlbumsActivity extends Activity {
 							@Override
 							public void onImageLoadComplete(int token,
 									ImageView iView, boolean imagePresent) {
-								// notifyDataSetChanged();
-								c.moveToPosition(index);
-								c.requery();
-
+								reloadArtworkIfNeeded();
 							}
 						});
 
@@ -385,6 +388,25 @@ public class ArtistAlbumsActivity extends Activity {
 		@Override
 		public int getSectionForPosition(int position) {
 			return 0;
+		}
+
+		@Override
+		public Cursor runQuery(CharSequence text) {
+			MatrixCursor nc = new MatrixCursor(ViewUtils.mArtistColumnName);
+			mCursor.moveToFirst();
+			do {
+				if (mCursor.getString(1).startsWith((String) text)) {
+					MatrixCursor.RowBuilder rb = nc.newRow();
+					for (int i = 0; i < mCursor.getColumnCount(); i++) {
+						rb = rb.add(mCursor.getString(i));
+					}
+				}
+			} while (mCursor.moveToNext());
+
+			mIndexer = new AlphabetIndexer(nc, nc
+					.getColumnIndex(ViewUtils.ARTIST_NAME), mRessource
+					.getString(R.string.fast_scroll_numeric_alphabet));
+			return nc;
 		}
 	}
 

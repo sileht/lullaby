@@ -34,7 +34,7 @@ public class SettingActivity extends PreferenceActivity {
 	}
 
 	protected void onStop() {
-		Log.v("DroidZikSetting","Exit settings, relogin to ampache;");
+		Log.v("LullabySetting","Exit settings, relogin to ampache;");
 		Lullaby.comm.force_auth_request();
 		/* we want to tell other activities that we need to reload */
 		super.onStop();

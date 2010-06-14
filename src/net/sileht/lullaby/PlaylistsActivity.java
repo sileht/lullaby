@@ -90,20 +90,20 @@ public class PlaylistsActivity extends Activity {
 		super.onStart();
 		mViewUtils.onStart();
 	}
-	
+
 	@Override
-	protected void onStop(){
+	protected void onStop() {
 		mViewUtils.onStop();
 		super.onStop();
 	}
 
 	static class PlaylistsAdapter extends SimpleCursorAdapter implements
-			SectionIndexer {
+			SectionIndexer, FilterQueryProvider {
 
 		private AlphabetIndexer mIndexer;
 		private final StringBuilder mBuffer = new StringBuilder();
-        private Resources mRessource;
-        private Cursor mCursor;
+		private Resources mRessource;
+		private Cursor mCursor;
 
 		public PlaylistsAdapter(Context context, Cursor cursor) {
 			super(context, R.layout.track_list_item_mini, cursor,
@@ -114,27 +114,8 @@ public class PlaylistsActivity extends Activity {
 			mIndexer = new AlphabetIndexer(mCursor, mCursor
 					.getColumnIndex(ViewUtils.PLAYLIST_NAME), mRessource
 					.getString(R.string.fast_scroll_numeric_alphabet));
-			
-			setFilterQueryProvider(new FilterQueryProvider() {
-				@Override
-				public Cursor runQuery(CharSequence text) {
-					MatrixCursor nc = new MatrixCursor(ViewUtils.mPlaylistsColumnName);
-					mCursor.moveToFirst();
-					do {
-						if ( mCursor.getString(1).startsWith((String) text)){
-							MatrixCursor.RowBuilder rb = nc.newRow();
-							for (int i = 0; i < mCursor.getColumnCount(); i++){
-								rb = rb.add(mCursor.getString(i));
-							}
-						}
-					} while (mCursor.moveToNext());
+			setFilterQueryProvider(this);
 
-					mIndexer = new AlphabetIndexer(nc, nc
-							.getColumnIndex(ViewUtils.PLAYLIST_NAME), mRessource
-							.getString(R.string.fast_scroll_numeric_alphabet));
-					return nc;
-				}
-			});
 		}
 
 		@Override
@@ -148,6 +129,11 @@ public class PlaylistsActivity extends Activity {
 			vh.duration = (TextView) v.findViewById(R.id.duration);
 			v.setTag(vh);
 			return v;
+		}
+
+		@Override
+		public boolean hasStableIds() {
+			return true;
 		}
 
 		@Override
@@ -203,5 +189,23 @@ public class PlaylistsActivity extends Activity {
 			return 0;
 		}
 
+		@Override
+		public Cursor runQuery(CharSequence text) {
+			MatrixCursor nc = new MatrixCursor(ViewUtils.mPlaylistsColumnName);
+			mCursor.moveToFirst();
+			do {
+				if (mCursor.getString(1).startsWith((String) text)) {
+					MatrixCursor.RowBuilder rb = nc.newRow();
+					for (int i = 0; i < mCursor.getColumnCount(); i++) {
+						rb = rb.add(mCursor.getString(i));
+					}
+				}
+			} while (mCursor.moveToNext());
+
+			mIndexer = new AlphabetIndexer(nc, nc
+					.getColumnIndex(ViewUtils.PLAYLIST_NAME), mRessource
+					.getString(R.string.fast_scroll_numeric_alphabet));
+			return nc;
+		}
 	}
 }

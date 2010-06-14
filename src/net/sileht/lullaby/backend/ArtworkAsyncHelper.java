@@ -152,7 +152,14 @@ public class ArtworkAsyncHelper extends Handler {
 			reply.sendToTarget();
 		}
 	}
-
+	private static boolean isCachedInFile(WorkerArgs args){
+		Utils.checkStorage();
+		File f = Utils.getCacheFile("artwork", "" + getId(args.url));
+		if (Utils.mExternalStorageAvailable && f.exists()) {
+			return true;
+		}
+		return false;
+	}
 	private static Drawable getDrawable(WorkerArgs args) throws IOException {
 
 		URL finalUrl = null;
@@ -329,6 +336,19 @@ public class ArtworkAsyncHelper extends Handler {
 			} else if (placeholderImageResource != -1) {
 				imageView.setImageResource(placeholderImageResource);
 			}
+		} else if (isCachedInFile(args)) {
+			Drawable d;
+			try {
+				d = getDrawable(args);
+			} catch (IOException e) {
+				d = null;
+			}
+			mArtworkCache.put(getHash(args), (Drawable) d);
+			if (d != null) {
+				imageView.setImageDrawable(d);
+			} else if (placeholderImageResource != -1) {
+				imageView.setImageResource(placeholderImageResource);
+			}		
 		} else {
 			// setup message arguments
 			Message msg = sThreadHandler.obtainMessage(0);

@@ -91,13 +91,14 @@ public class PlayingPlaylistActivity extends ListActivity implements
 	}
 
 	@Override
-	protected void onStart(){
+	protected void onStart() {
 		super.onStart();
 		Context c = this.getParent();
 		c.startService(new Intent(c, PlayerService.class));
-		c.bindService(new Intent(c, PlayerService.class),
-				mPlayerConnection, Context.BIND_AUTO_CREATE);
+		c.bindService(new Intent(c, PlayerService.class), mPlayerConnection,
+				Context.BIND_AUTO_CREATE);
 	}
+
 	private final static int MENU_PLAY_SELECTION = 0;
 	private final static int MENU_DELETE_ITEM = 1;
 
@@ -146,7 +147,7 @@ public class PlayingPlaylistActivity extends ListActivity implements
 					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		}
-
+		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			View v = mInflater.inflate(mResource, parent, false);

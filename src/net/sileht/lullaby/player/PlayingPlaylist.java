@@ -58,7 +58,7 @@ public class PlayingPlaylist {
 
 	private PlayerService mPlayer;
 
-	private static final String TAG = "DroidZikPlayingPlaylist";
+	private static final String TAG = "LullabyPlayingPlaylist";
 
 	public PlayingPlaylist(PlayerService player) {
 		mPlayer = player;

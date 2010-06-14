@@ -116,32 +116,41 @@ public class PlayerService extends Service {
 
 	private void setState(STATE state) {
 
-		boolean previousPlayingState = isPlaying();
-
+		boolean isPreviouslyPlaying = isPlaying();
+		STATE pm = mState;
 		mState = state;
-		if (mSong != null) {
-			if (isPlaying() != previousPlayingState) {
+		boolean isPlaying = isPlaying();
+
+		Log.d(TAG, "ps:" + isPreviouslyPlaying + " - pm:" + pm + " | s:"
+				+ isPlaying + " - " + mState);
+
+		if (isPlaying != isPreviouslyPlaying) {
+			if (isPlaying) {
 				for (PlayerListener obj : mPlayerListeners) {
 					obj.onTogglePlaying(isPlaying());
 				}
-				RemoteViews views = new RemoteViews(this.getPackageName(),
-						R.layout.statusbar);
-				views.setImageViewResource(R.id.icon, R.drawable.status_icon);
-				views.setTextViewText(R.id.trackname, mSong.name);
-				views.setTextViewText(R.id.artistalbum, mSong.album + " - "
-						+ mSong.artist);
+				if (mSong != null) {
+					RemoteViews views = new RemoteViews(this.getPackageName(),
+							R.layout.statusbar);
+					views.setImageViewResource(R.id.icon,
+							R.drawable.status_icon);
+					views.setTextViewText(R.id.trackname, mSong.name);
+					views.setTextViewText(R.id.artistalbum, mSong.album + " - "
+							+ mSong.artist);
 
-				Notification n = new Notification();
-				n.icon = R.drawable.status_icon;
-				n.tickerText = "Playing " + mSong.name;
-				n.flags |= Notification.FLAG_ONGOING_EVENT;
-				n.contentView = views;
-				n.contentIntent = PendingIntent.getActivity(this, 0,
-						new Intent(this, PlayingActivity.class), 0);
-				startForeground(1, n);
+					Notification n = new Notification();
+					n.icon = R.drawable.status_icon;
+					n.tickerText = "Playing " + mSong.name;
+					n.flags |= Notification.FLAG_ONGOING_EVENT;
+					n.contentView = views;
+					n.contentIntent = PendingIntent.getActivity(this, 0,
+							new Intent(this, PlayingActivity.class), 0);
+					startForeground(1, n);
+				}
 			} else {
 				stopForeground(true);
 			}
+
 		}
 
 		String st = "";

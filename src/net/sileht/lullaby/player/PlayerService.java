@@ -357,10 +357,10 @@ public class PlayerService extends Service {
 			if (mPlayAfterPrepared) {
 				mPlayer.start();
 				setState(STATE.Started);
-			} else {
+			}/* else {
 				mPlayer.pause();
 				setState(STATE.Paused);
-			}
+			}*/
 			mPlayAfterPrepared = true;
 		}
 

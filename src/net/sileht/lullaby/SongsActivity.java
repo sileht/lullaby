@@ -118,12 +118,12 @@ public class SongsActivity extends Activity {
 		}
 		mAdapter = getNewAdapter();
 		lv.setAdapter(mAdapter);
-		mViewUtils.doBindService();
+		mViewUtils.doBindService(false);
 	}
 
 	@Override
 	protected void onDestroy() {
-		mViewUtils.doUnbindService();
+		mViewUtils.doUnbindService(false);
 		super.onDestroy();
 	}
 

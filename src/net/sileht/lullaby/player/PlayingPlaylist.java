@@ -87,6 +87,12 @@ public class PlayingPlaylist {
 		return mPlaylist.get(position);
 	}
 
+	protected void setCurrentPosition(int pos) {
+		if (pos > 0 && pos < mPlaylist.size()) {
+			mCurrentPlayingPosition = pos;
+		}
+	}
+
 	public int getCurrentPosition() {
 		if (mHideCurrentPosition) {
 			return -1;
@@ -220,7 +226,7 @@ public class PlayingPlaylist {
 			}
 
 			if (shuffleEnabled()) {
-				if (pos >= 0){
+				if (pos >= 0) {
 					mCurrentShufflePosition = pos;
 				} else {
 					rebuildShuffleList();
@@ -295,7 +301,7 @@ public class PlayingPlaylist {
 						s);
 			}
 		}
-		
+
 		updateAdapter();
 		if (startplaying) {
 			playNext();
@@ -363,7 +369,7 @@ public class PlayingPlaylist {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void load(Context ctx) {
+	public boolean load(Context ctx) {
 
 		try {
 			FileInputStream pin = ctx.openFileInput("playlist");
@@ -376,6 +382,8 @@ public class PlayingPlaylist {
 					mPlaylist = (ArrayList<Song>) objs;
 					rebuildShuffleList();
 					updateAdapter();
+					pin.close();
+					return true;
 				} else {
 					Log
 							.v(TAG,
@@ -387,11 +395,11 @@ public class PlayingPlaylist {
 			}
 			pin.close();
 		} catch (FileNotFoundException e) {
-			// No playlist for now
 		} catch (Exception e) {
 			Toast.makeText(ctx, "Failed to load playlist.", Toast.LENGTH_LONG)
 					.show();
 			e.printStackTrace();
 		}
+		return false;
 	}
 }

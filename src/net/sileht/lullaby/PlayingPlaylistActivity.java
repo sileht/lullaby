@@ -51,7 +51,8 @@ public class PlayingPlaylistActivity extends ListActivity implements
 
 	// private static final String TAG = "LullabyPlayingPlaylist";
 
-	// Bind Service Player
+	// Bind Service Player       
+	private boolean mIsBound;
 	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
@@ -88,16 +89,31 @@ public class PlayingPlaylistActivity extends ListActivity implements
 						mPlayer.mPlaylist.move(from, to);
 					}
 				});
-
+		doBindService();
 	}
 
-	@Override
-	protected void onStart() {
-		super.onStart();
+	void doBindService() {
 		Context c = this.getParent();
-		c.startService(new Intent(c, PlayerService.class));
+		//c.startService(new Intent(c, PlayerService.class));
 		c.bindService(new Intent(c, PlayerService.class), mPlayerConnection,
 				Context.BIND_AUTO_CREATE);
+		mIsBound = true;
+	}
+
+	void doUnbindService() {
+		if (mIsBound) {
+			Context c = this.getParent();
+			// Detach our existing connection.
+			c.unbindService(mPlayerConnection);
+			mIsBound = false;
+		}
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onStop();
+		doUnbindService();
+
 	}
 
 	@Override

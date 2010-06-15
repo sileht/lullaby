@@ -82,6 +82,7 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 	private Context mContext;
 
 	// Bind Service Player
+	private boolean mIsBound;
 	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
@@ -99,27 +100,50 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 		mContext = context;
 	}
 
-	public void onStart() {
-		onStart(true);
-	}
-	
-	public void onStart(boolean useActivityGroup) {
-		Context c = null;
-		if (useActivityGroup){
-			c = (Context) ((Activity) mContext).getParent();
-		}else{
-			c = mContext;
-		} 
-		c.startService(new Intent(c, PlayerService.class));
-		c.bindService(new Intent(c, PlayerService.class),
-				mPlayerConnection, 0);
+	void doBindService() {
+		doBindService(true);
 	}
 
-	public void onStop() {
-		try {
-		    mContext.unbindService(mPlayerConnection);
-		} catch(Exception e) {
+	void doBindService(boolean useActivityGroup) {
+		Context c = null;
+		if (useActivityGroup) {
+			c = (Context) ((Activity) mContext).getParent();
+		} else {
+			c = mContext;
 		}
+		// c.startService(new Intent(c, PlayerService.class));
+		c.bindService(new Intent(c, PlayerService.class), mPlayerConnection,
+				Context.BIND_AUTO_CREATE);
+		mIsBound = true;
+	}
+
+	void doUnbindService() {
+		doUnbindService(true);
+	}
+
+	void doUnbindService(boolean useActivityGroup) {
+		if (mIsBound) {
+			Context c = null;
+			if (useActivityGroup) {
+				c = (Context) ((Activity) mContext).getParent();
+			} else {
+				c = mContext;
+			}
+			// Detach our existing connection.
+			c.unbindService(mPlayerConnection);
+			mIsBound = false;
+		}
+	}
+
+	public void onStart(boolean useActivityGroup) {
+		Context c = null;
+		if (useActivityGroup) {
+			c = (Context) ((Activity) mContext).getParent();
+		} else {
+			c = mContext;
+		}
+		c.startService(new Intent(c, PlayerService.class));
+		c.bindService(new Intent(c, PlayerService.class), mPlayerConnection, 0);
 	}
 
 	public void startSongsActivity(String type, String id, String title) {

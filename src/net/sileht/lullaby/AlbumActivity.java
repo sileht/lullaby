@@ -86,18 +86,13 @@ public class AlbumActivity extends Activity {
 		}
 		mAdapter = new AlbumsAdapter(this, albumsData);
 		lv.setAdapter(mAdapter);
+		mViewUtils.doBindService();
 	}
 
 	@Override
-	protected void onStart() {
-		super.onStart();
-		mViewUtils.onStart();
-	}
-
-	@Override
-	protected void onStop() {
-		mViewUtils.onStop();
-		super.onStop();
+	protected void onDestroy() {
+		mViewUtils.doUnbindService();
+		super.onDestroy();
 	}
 
 	static class AlbumsAdapter extends SimpleCursorAdapter implements

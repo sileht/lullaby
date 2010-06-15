@@ -116,7 +116,13 @@ public class PlayerService extends Service implements
 		SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME,
 				MODE_PRIVATE);
 		String id = settings.getString("song_id", null);
+		int pos = settings.getInt("playlist_pos", -1);
 
+		if (mPlaylist.load(ctx) && pos != -1){
+			mPlaylist.setCurrentPosition(pos);
+		}
+		
+		
 		if (id != null && !id.equals("")) {
 			AmpacheRequest request = new AmpacheRequest(null, new String[] {
 					"song", id }, true, false) {
@@ -130,7 +136,6 @@ public class PlayerService extends Service implements
 			};
 			request.send();
 		}
-		mPlaylist.load(ctx);
 		Log.v(TAG, "Lullaby Player Service Start");
 		mTickHandler.postDelayed(mTickTask, 100);
 
@@ -146,9 +151,10 @@ public class PlayerService extends Service implements
 	@Override
 	public void onDestroy() {
 		doPlaybackStop();
+		
 		stopForeground(true);
+		
 		Context ctx = getApplicationContext();
-		mPlaylist.save(ctx);
 		SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME,
 				MODE_PRIVATE);
 		SharedPreferences.Editor editor = settings.edit();
@@ -157,8 +163,14 @@ public class PlayerService extends Service implements
 		} else {
 			editor.putString("song_id", null);
 		}
+		mPlaylist.save(ctx);
+		int pos = mPlaylist.getCurrentPosition();
+		editor.putInt("playlist_pos", pos);
+		
+		// Save pref
 		editor.commit();
-		Log.d(TAG, "DestroyService");
+		
+		Log.d(TAG, "Service Destroyed");
 	}
 
 	private void setState(STATE state) {

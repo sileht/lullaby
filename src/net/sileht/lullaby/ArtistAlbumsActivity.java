@@ -81,8 +81,8 @@ public class ArtistAlbumsActivity extends Activity {
 
 			mAdapter = getNewAdapter();
 
-			AmpacheRequest request = new AmpacheRequest(this,
-					new String[] { "artists", "" }) {
+			AmpacheRequest request = new AmpacheRequest(this, new String[] {
+					"artists", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void add_objects(ArrayList list) {
@@ -98,19 +98,13 @@ public class ArtistAlbumsActivity extends Activity {
 			mAdapter = getNewAdapter();
 		}
 		mListView.setAdapter(mAdapter);
-
+		mViewUtils.doBindService();
 	}
 
 	@Override
-	protected void onStart() {
-		super.onStart();
-		mViewUtils.onStart();
-	}
-
-	@Override
-	protected void onStop() {
-		mViewUtils.onStop();
-		super.onStop();
+	protected void onDestroy() {
+		mViewUtils.doUnbindService();
+		super.onDestroy();
 	}
 
 	private class AlbumClickListener implements
@@ -233,9 +227,8 @@ public class ArtistAlbumsActivity extends Activity {
 				mCurrentActivity.startManagingCursor(cur);
 				mCurrentActivity.albumsData.put(id, cur);
 
-				AmpacheRequest request = new AmpacheRequest(
-						mCurrentActivity, new String[] {
-								"artist_albums", id }) {
+				AmpacheRequest request = new AmpacheRequest(mCurrentActivity,
+						new String[] { "artist_albums", id }) {
 					@SuppressWarnings("unchecked")
 					@Override
 					public void add_objects(ArrayList list) {

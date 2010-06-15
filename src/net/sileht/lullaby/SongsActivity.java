@@ -1,23 +1,24 @@
 package net.sileht.lullaby;
+
 /* Copyright (c) 20010 ABAAKOUK Mehdi  <theli48@gmail.com>
-*
-* +------------------------------------------------------------------------+
-* | This program is free software; you can redistribute it and/or          |
-* | modify it under the terms of the GNU General Public License            |
-* | as published by the Free Software Foundation; either version 2         |
-* | of the License, or (at your option) any later version.                 |
-* |                                                                        |
-* | This program is distributed in the hope that it will be useful,        |
-* | but WITHOUT ANY WARRANTY; without even the implied warranty of         |
-* | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          |
-* | GNU General Public License for more details.                           |
-* |                                                                        |
-* | You should have received a copy of the GNU General Public License      |
-* | along with this program; if not, write to the Free Software            |
-* | Foundation, Inc., 59 Temple Place - Suite 330,                         |
-* | Boston, MA  02111-1307, USA.                                           |
-* +------------------------------------------------------------------------+
-*/
+ *
+ * +------------------------------------------------------------------------+
+ * | This program is free software; you can redistribute it and/or          |
+ * | modify it under the terms of the GNU General Public License            |
+ * | as published by the Free Software Foundation; either version 2         |
+ * | of the License, or (at your option) any later version.                 |
+ * |                                                                        |
+ * | This program is distributed in the hope that it will be useful,        |
+ * | but WITHOUT ANY WARRANTY; without even the implied warranty of         |
+ * | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          |
+ * | GNU General Public License for more details.                           |
+ * |                                                                        |
+ * | You should have received a copy of the GNU General Public License      |
+ * | along with this program; if not, write to the Free Software            |
+ * | Foundation, Inc., 59 Temple Place - Suite 330,                         |
+ * | Boston, MA  02111-1307, USA.                                           |
+ * +------------------------------------------------------------------------+
+ */
 import java.util.ArrayList;
 
 import net.sileht.lullaby.R;
@@ -86,7 +87,7 @@ public class SongsActivity extends Activity {
 		setContentView(R.layout.list_classic);
 
 		ListView lv = (ListView) findViewById(R.id.list);
-		
+
 		mViewUtils = new ViewUtils(this);
 		lv.setOnItemClickListener(mViewUtils);
 		lv.setOnItemLongClickListener(mViewUtils);
@@ -117,19 +118,13 @@ public class SongsActivity extends Activity {
 		}
 		mAdapter = getNewAdapter();
 		lv.setAdapter(mAdapter);
+		mViewUtils.doBindService();
 	}
 
 	@Override
-	protected void onStart() {
-		super.onStart();
-		mViewUtils.onStart(false);
-	}
-	
-	@Override
-	protected void onStop(){
-		request.stop();
-		mViewUtils.onStop();
-		super.onStop();
+	protected void onDestroy() {
+		mViewUtils.doUnbindService();
+		super.onDestroy();
 	}
 
 	private SimpleCursorAdapter getNewAdapter() {
@@ -148,8 +143,8 @@ public class SongsActivity extends Activity {
 
 		private AlphabetIndexer mIndexer;
 		private SongsActivity mCurrentActivity;
-        private Resources mRessource;
-        private Cursor mCursor;
+		private Resources mRessource;
+		private Cursor mCursor;
 
 		public SongsAdapter(Context context, SongsActivity activity,
 				Cursor cursor, int layout, String[] from, int[] to) {
@@ -161,16 +156,17 @@ public class SongsActivity extends Activity {
 			mIndexer = new AlphabetIndexer(mCursor, mCursor
 					.getColumnIndex(ViewUtils.SONG_NAME), mRessource
 					.getString(R.string.fast_scroll_numeric_alphabet));
-			
+
 			setFilterQueryProvider(new FilterQueryProvider() {
 				@Override
 				public Cursor runQuery(CharSequence text) {
-					MatrixCursor nc = new MatrixCursor(ViewUtils.mSongsColumnName);
+					MatrixCursor nc = new MatrixCursor(
+							ViewUtils.mSongsColumnName);
 					mCursor.moveToFirst();
 					do {
-						if ( mCursor.getString(1).startsWith((String) text)){
+						if (mCursor.getString(1).startsWith((String) text)) {
 							MatrixCursor.RowBuilder rb = nc.newRow();
-							for (int i = 0; i < mCursor.getColumnCount(); i++){
+							for (int i = 0; i < mCursor.getColumnCount(); i++) {
 								rb = rb.add(mCursor.getString(i));
 							}
 						}

@@ -27,6 +27,7 @@ import net.sileht.lullaby.objects.Song;
 import net.sileht.lullaby.player.PlayerService;
 import android.app.ActivityGroup;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
@@ -70,7 +71,8 @@ public class MainActivity extends ActivityGroup implements
 
 	// private static final String TAG = "LullabyMainActivity";
 
-	// Bind Service Player
+	// Bind Service Player 
+	private boolean mIsBound;
 	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
@@ -179,24 +181,29 @@ public class MainActivity extends ActivityGroup implements
 		});
 
 		updateBottomBar();
-
+		doBindService();
 	}
 
-	@Override
-	protected void onStart() {
-		super.onStart();
-		startService(new Intent(MainActivity.this, PlayerService.class));
-		bindService(new Intent(MainActivity.this, PlayerService.class),
-				mPlayerConnection, 0);
+
+	void doBindService() {
+		//c.startService(new Intent(c, PlayerService.class));
+		bindService(new Intent(this, PlayerService.class), mPlayerConnection,
+				Context.BIND_AUTO_CREATE);
+		mIsBound = true;
+	}
+
+	void doUnbindService() {
+		if (mIsBound) {
+			// Detach our existing connection.
+			unbindService(mPlayerConnection);
+			mIsBound = false;
+		}
 	}
 
 	@Override
 	protected void onDestroy() {
-		try {
-			unbindService(mPlayerConnection);
-		} catch (Exception e) {
-		}
 		super.onDestroy();
+		doUnbindService();
 	}
 
 	@Override
@@ -226,8 +233,6 @@ public class MainActivity extends ActivityGroup implements
 
 	@Override
 	public void onTick(int position, int duration, int buffer) {
-		// TODO Auto-generated method stub
-
 	}
 
 	private void updateBottomBar() {
@@ -305,9 +310,8 @@ public class MainActivity extends ActivityGroup implements
 			root.delete();
 			return true;
 		case MENU_EXIT:
-			mPlayer.doPlaybackStop();
-			mPlayer.stopSelf();
 			onDestroy();
+			stopService(new Intent(MainActivity.this, PlayerService.class));
 			finish();
 			return true;
 		default:

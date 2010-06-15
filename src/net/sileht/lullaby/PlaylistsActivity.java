@@ -64,8 +64,8 @@ public class PlaylistsActivity extends Activity {
 			playlistsData = new MatrixCursor(ViewUtils.mPlaylistsColumnName);
 			startManagingCursor(playlistsData);
 
-			AmpacheRequest request = new AmpacheRequest(this,
-					new String[] { "playlists", "" }) {
+			AmpacheRequest request = new AmpacheRequest(this, new String[] {
+					"playlists", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void add_objects(ArrayList list) {
@@ -82,19 +82,13 @@ public class PlaylistsActivity extends Activity {
 		}
 		mAdapter = new PlaylistsAdapter(this, playlistsData);
 		lv.setAdapter(mAdapter);
-
+		mViewUtils.doBindService();
 	}
 
 	@Override
-	protected void onStart() {
-		super.onStart();
-		mViewUtils.onStart();
-	}
-
-	@Override
-	protected void onStop() {
-		mViewUtils.onStop();
-		super.onStop();
+	protected void onDestroy() {
+		mViewUtils.doUnbindService();
+		super.onDestroy();
 	}
 
 	static class PlaylistsAdapter extends SimpleCursorAdapter implements

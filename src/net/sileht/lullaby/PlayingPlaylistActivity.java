@@ -44,7 +44,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class PlayingPlaylistActivity extends ListActivity implements
-		View.OnCreateContextMenuListener {
+		View.OnCreateContextMenuListener, PlayerService.OnStatusListener {
 
 	private PlayingPlaylistAdapter mAdapter;
 	private ListView mView;
@@ -59,7 +59,8 @@ public class PlayingPlaylistActivity extends ListActivity implements
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mPlayer = ((PlayerService.PlayerBinder) service).getService();
 			mPlayer.mPlaylist.setAdapter(mAdapter);
-			mPlayer.setPlayerListener(new MyPlayerListener());
+			mPlayer
+					.setOnPlayerListener((PlayerService.OnStatusListener) PlayingPlaylistActivity.this);
 		}
 
 		@Override
@@ -99,38 +100,22 @@ public class PlayingPlaylistActivity extends ListActivity implements
 				Context.BIND_AUTO_CREATE);
 	}
 
-	private final static int MENU_PLAY_SELECTION = 0;
-	private final static int MENU_DELETE_ITEM = 1;
-
 	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v,
-			ContextMenuInfo menuinfo) {
-		menu.add(0, MENU_PLAY_SELECTION, 0, "Play").setIcon(
-				android.R.drawable.ic_media_play);
-		menu.add(0, MENU_DELETE_ITEM, 0, "Delete").setIcon(
-				android.R.drawable.ic_menu_delete);
+	public void onBuffering(int buffer) {
 	}
 
 	@Override
-	public boolean onContextItemSelected(MenuItem item) {
-		AdapterView.AdapterContextMenuInfo menuinfo = (AdapterView.AdapterContextMenuInfo) item
-				.getMenuInfo();
-		if (mPlayer != null) {
-			switch (item.getItemId()) {
-			case MENU_PLAY_SELECTION:
-				mPlayer.mPlaylist.play(menuinfo.position);
-				return true;
-			case MENU_DELETE_ITEM:
-				mPlayer.mPlaylist.remove(menuinfo.position);
-				return true;
-			}
-		}
-		return super.onContextItemSelected(item);
+	public void onTogglePlaying(boolean playing) {
 	}
 
 	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		mPlayer.mPlaylist.play(position);
+	public void onStatusChange() {
+		int position = mPlayer.mPlaylist.getCurrentPosition();
+		mView.setSelectionFromTop(position, 0);
+	}
+
+	@Override
+	public void onTick(int position, int duration, int buffer) {
 	}
 
 	static class PlayingPlaylistAdapter extends BaseAdapter {
@@ -146,7 +131,7 @@ public class PlayingPlaylistActivity extends ListActivity implements
 					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		}
-		
+
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			View v = mInflater.inflate(mResource, parent, false);
@@ -201,28 +186,37 @@ public class PlayingPlaylistActivity extends ListActivity implements
 		}
 	}
 
-	private class MyPlayerListener extends PlayerService.PlayerListener {
+	private final static int MENU_PLAY_SELECTION = 0;
+	private final static int MENU_DELETE_ITEM = 1;
 
-		@Override
-		public void onBuffering(int buffer) {
-			return;
+	@Override
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+		mPlayer.mPlaylist.play(position);
+	}
+
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v,
+			ContextMenuInfo menuinfo) {
+		menu.add(0, MENU_PLAY_SELECTION, 0, "Play").setIcon(
+				android.R.drawable.ic_media_play);
+		menu.add(0, MENU_DELETE_ITEM, 0, "Delete").setIcon(
+				android.R.drawable.ic_menu_delete);
+	}
+
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		AdapterView.AdapterContextMenuInfo menuinfo = (AdapterView.AdapterContextMenuInfo) item
+				.getMenuInfo();
+		if (mPlayer != null) {
+			switch (item.getItemId()) {
+			case MENU_PLAY_SELECTION:
+				mPlayer.mPlaylist.play(menuinfo.position);
+				return true;
+			case MENU_DELETE_ITEM:
+				mPlayer.mPlaylist.remove(menuinfo.position);
+				return true;
+			}
 		}
-
-		@Override
-		public void onNewSongPlaying(Song song) {
-			int position = mPlayer.mPlaylist.getCurrentPosition();
-			mView.setSelectionFromTop(position, 0);
-		}
-
-		@Override
-		public void onTogglePlaying(boolean playing) {
-			return;
-		}
-
-		@Override
-		public void onPlayerStopped() {
-			return;
-		}
-
+		return super.onContextItemSelected(item);
 	}
 }

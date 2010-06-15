@@ -21,8 +21,6 @@ package net.sileht.lullaby;
  */
 
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import net.sileht.lullaby.backend.ArtworkAsyncHelper;
 import net.sileht.lullaby.objects.Album;
@@ -34,7 +32,7 @@ import android.database.MatrixCursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
@@ -72,8 +70,8 @@ public class AlbumActivity extends Activity {
 			albumsData = new MatrixCursor(ViewUtils.mAlbumsColumnName);
 			startManagingCursor(albumsData);
 
-			AmpacheRequest request = new AmpacheRequest(this,
-					new String[] { "albums", "" }) {
+			AmpacheRequest request = new AmpacheRequest(this, new String[] {
+					"albums", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void add_objects(ArrayList list) {
@@ -147,19 +145,17 @@ public class AlbumActivity extends Activity {
 		 * reloading to much list for displaying a cover
 		 */
 		private final static long ARTWORK_RELOAD_PERIOD = 3000;
-		private TimerTask mTimerTask = null;
+		private Handler mArtworkHandler = new Handler();
+		private Runnable mArtworkTask = new Runnable() {
+			@Override
+			public void run() {
+				notifyDataSetChanged();
+			}
+		};
 
 		private void reloadArtworkIfNeeded() {
-			if (mTimerTask != null)
-				mTimerTask.cancel();
-			mTimerTask = new TimerTask() {
-				@Override
-				public void run() {
-					Log.d(TAG, "Reload DataSet to show artwork");
-					notifyDataSetChanged();
-				}
-			};
-			(new Timer()).schedule(mTimerTask, ARTWORK_RELOAD_PERIOD);
+			mArtworkHandler.removeCallbacks(mArtworkTask);
+			mArtworkHandler.postDelayed(mArtworkTask, ARTWORK_RELOAD_PERIOD);
 		}
 
 		@Override

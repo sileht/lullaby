@@ -28,11 +28,11 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
-import android.view.View;
 import android.widget.ImageView;
 
 public class ArtworkAsyncHelper extends Handler {
 
+	private static boolean LOAD_FROM_FILE_DIRECTLY = false;
 	private final static boolean LOG_ARTWORK_FINGERPRINT = false;
 	private final static boolean DBG = false;
 	private final static String TAG = "LullabyArtworkAsyncHelper";
@@ -152,7 +152,8 @@ public class ArtworkAsyncHelper extends Handler {
 			reply.sendToTarget();
 		}
 	}
-	private static boolean isCachedInFile(WorkerArgs args){
+
+	private static boolean isCachedInFile(WorkerArgs args) {
 		Utils.checkStorage();
 		File f = Utils.getCacheFile("artwork", "" + getId(args.url));
 		if (Utils.mExternalStorageAvailable && f.exists()) {
@@ -160,6 +161,7 @@ public class ArtworkAsyncHelper extends Handler {
 		}
 		return false;
 	}
+
 	private static Drawable getDrawable(WorkerArgs args) throws IOException {
 
 		URL finalUrl = null;
@@ -312,9 +314,9 @@ public class ArtworkAsyncHelper extends Handler {
 			if (DBG)
 				Log
 						.d(TAG,
-								"target image is null, juif (DBG) Log.isplay placeholder.");
-			imageView.setVisibility(View.VISIBLE);
-			imageView.setImageResource(placeholderImageResource);
+								"target image is null, just display placeholder.");
+			if (placeholderImageResource!=1)
+				imageView.setImageResource(placeholderImageResource);
 			return;
 		}
 		// setup arguments
@@ -336,7 +338,7 @@ public class ArtworkAsyncHelper extends Handler {
 			} else if (placeholderImageResource != -1) {
 				imageView.setImageResource(placeholderImageResource);
 			}
-		} else if (isCachedInFile(args)) {
+		} else if (LOAD_FROM_FILE_DIRECTLY && isCachedInFile(args)) {
 			Drawable d;
 			try {
 				d = getDrawable(args);
@@ -348,7 +350,7 @@ public class ArtworkAsyncHelper extends Handler {
 				imageView.setImageDrawable(d);
 			} else if (placeholderImageResource != -1) {
 				imageView.setImageResource(placeholderImageResource);
-			}		
+			}
 		} else {
 			// setup message arguments
 			Message msg = sThreadHandler.obtainMessage(0);
@@ -385,7 +387,7 @@ public class ArtworkAsyncHelper extends Handler {
 			// in either case, make sure the image is visible.
 			mArtworkCache.put(getHash(args), (Drawable) args.result);
 			if (args.result != null) {
-				// args.view.setImageDrawable((Drawable) args.result);
+				//args.view.setImageDrawable((Drawable) args.result);
 				imagePresent = true;
 			} else if (args.defaultResource != -1) {
 				args.view.setImageResource(args.defaultResource);

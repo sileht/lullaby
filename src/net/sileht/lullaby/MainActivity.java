@@ -48,7 +48,8 @@ import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends ActivityGroup {
+public class MainActivity extends ActivityGroup implements
+		PlayerService.OnStatusListener {
 
 	// private static final int SWIPE_MAX_OFF_PATH = 250; // initial value
 	private static final int SWIPE_MAX_OFF_PATH = 300;
@@ -76,8 +77,9 @@ public class MainActivity extends ActivityGroup {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mPlayer = ((PlayerService.PlayerBinder) service).getService();
-			mPlayer.setPlayerListener(new MyPlayerListener());
-			mPlayer.mPlaylist.load(MainActivity.this);
+			mPlayer
+					.setOnPlayerListener((PlayerService.OnStatusListener) MainActivity.this);
+
 		}
 
 		@Override
@@ -171,9 +173,12 @@ public class MainActivity extends ActivityGroup {
 			public void onClick(View v) {
 				Intent i = new Intent();
 				i.setClass(v.getContext(), PlayingActivity.class);
+				i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 				startActivity(i);
 			}
 		});
+
+		updateBottomBar();
 
 	}
 
@@ -186,20 +191,66 @@ public class MainActivity extends ActivityGroup {
 	}
 
 	@Override
-	protected void onPause() {
-		if (mPlayer != null) {
-			mPlayer.mPlaylist.save(this);
-		}
-		super.onPause();
-	}
-
-	@Override
 	protected void onDestroy() {
 		try {
 			unbindService(mPlayerConnection);
 		} catch (Exception e) {
 		}
 		super.onDestroy();
+	}
+
+	@Override
+	public boolean onSearchRequested() {
+		startSearch(null, false, null, false);
+		return true;
+	}
+
+	@Override
+	public void onBuffering(int buffer) {
+		updateBottomBar();
+	}
+
+	@Override
+	public void onStatusChange() {
+		updateBottomBar();
+	}
+
+	@Override
+	public void onTogglePlaying(boolean playing) {
+		if (playing) {
+			playpause.setImageResource(R.drawable.ic_media_pause);
+		} else {
+			playpause.setImageResource(R.drawable.ic_media_play);
+		}
+	}
+
+	@Override
+	public void onTick(int position, int duration, int buffer) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void updateBottomBar() {
+		if (mPlayer != null) {
+			Song s = mPlayer.getSong();
+			int buffer = mPlayer.getBuffer();
+			if (s != null) {
+				String l1 = s.name;
+				if (buffer >= 0 && buffer < 100) {
+					l1 = l1 + " (" + buffer + "%)";
+				}
+				line1.setText(l1);
+				line2.setText(s.album + " - " + s.artist);
+				ArtworkAsyncHelper.updateArtwork(MainActivity.this, artwork,
+						s.art, R.drawable.albumart_mp_unknown_list,
+						mArtworkWidth, mArtWorkHeight, false);
+				return;
+			}
+		}
+		line1.setText("No Playing.");
+		line2.setText("");
+		artwork.setImageResource(R.drawable.albumart_mp_unknown_list);
+
 	}
 
 	private static final int MENU_SETTINGS = 0;
@@ -267,89 +318,6 @@ public class MainActivity extends ActivityGroup {
 			return true;
 		}
 		return false;
-	}
-
-	@Override
-	public boolean onSearchRequested() {
-		startSearch(null, false, null, false);
-		return true;
-	}
-
-	// @Override
-	// public boolean onKeyDown(int keyCode, KeyEvent event) {
-	// if (keyCode == KeyEvent.KEYCODE_BACK) {
-
-	// finish();
-	// return super.onKeyDown(keyCode, event);
-
-	// }
-	// return false;
-	// }
-
-	private class MyPlayerListener extends PlayerService.PlayerListener {
-
-		private int mBuffering = -1;
-		private Song mSong;
-
-		public MyPlayerListener() {
-			onPlayerStopped();
-		}
-
-		private void setLine1() {
-			if (mSong != null) {
-				String l1 = mSong.name;
-				if (mBuffering >= 0 && mBuffering < 100) {
-					l1 = l1 + " (" + mBuffering + "%)";
-				}
-				line1.setText(l1);
-			}
-		}
-
-		private void setLine2() {
-			if (mSong != null) {
-				line2.setText(mSong.album + " - " + mSong.artist);
-			}
-		}
-
-		private void setCover() {
-			if (mSong != null) {
-				ArtworkAsyncHelper.updateArtwork(MainActivity.this, artwork,
-						mSong.art, R.drawable.albumart_mp_unknown_list,
-						mArtworkWidth, mArtWorkHeight, false);
-			}
-		}
-
-		@Override
-		public void onBuffering(int buffer) {
-			mBuffering = buffer;
-			setLine1();
-		}
-
-		@Override
-		public void onPlayerStopped() {
-			mSong = null;
-			line1.setText("No Playing.");
-			line2.setText("");
-			artwork.setImageResource(R.drawable.albumart_mp_unknown_list);
-		}
-
-		@Override
-		public void onNewSongPlaying(Song song) {
-			mSong = song;
-			setLine1();
-			setLine2();
-			setCover();
-		}
-
-		@Override
-		public void onTogglePlaying(boolean playing) {
-			// mSeekbarEnabled = playing;
-			if (playing) {
-				playpause.setImageResource(R.drawable.ic_media_pause);
-			} else {
-				playpause.setImageResource(R.drawable.ic_media_play);
-			}
-		}
 	}
 
 	class MyGestureDetector extends SimpleOnGestureListener {

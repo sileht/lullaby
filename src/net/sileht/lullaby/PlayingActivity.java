@@ -1,6 +1,5 @@
 package net.sileht.lullaby;
 
-import net.sileht.lullaby.R;
 import net.sileht.lullaby.backend.ArtworkAsyncHelper;
 import net.sileht.lullaby.objects.Song;
 import net.sileht.lullaby.player.PlayerService;
@@ -13,9 +12,7 @@ import android.gesture.GestureOverlayView;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -28,7 +25,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class PlayingActivity extends Activity {
+public class PlayingActivity extends Activity implements
+		PlayerService.OnStatusListener {
 
 	// private static final int SWIPE_MAX_OFF_PATH = 250; // initial value
 	private static final int SWIPE_MAX_OFF_PATH = 300;
@@ -67,11 +65,12 @@ public class PlayingActivity extends Activity {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mPlayer = ((PlayerService.PlayerBinder) service).getService();
-			mPlayer.setPlayerListener(new MyPlayerListener());
-			mPlayer.mPlaylist.load(PlayingActivity.this);
+			mPlayer
+					.setOnPlayerListener((PlayerService.OnStatusListener) PlayingActivity.this);
 			setToggleButtonImage();
 			setRepeatButtonImage();
 			setPlayPauseButtonImage();
+			updateInformation();
 		}
 
 		@Override
@@ -108,14 +107,15 @@ public class PlayingActivity extends Activity {
 			public void onClick(View v) {
 				Intent i = new Intent();
 				i.setClass(v.getContext(), MainActivity.class);
-				startActivityFromChild((Activity) PlayingActivity.this, i, 0);
+				i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+				startActivity(i);
 				finish();
 			}
 		});
 
 		mTimeView = (TextView) findViewById(R.id.currenttime);
 		mDurationView = (TextView) findViewById(R.id.totaltime);
-		
+
 		mProgress = (SeekBar) findViewById(android.R.id.progress);
 		mProgress.setMax(1000);
 		mProgress.setProgress(0);
@@ -188,7 +188,8 @@ public class PlayingActivity extends Activity {
 		((GestureOverlayView) findViewById(R.id.gestures))
 				.setOnTouchListener(gestureListener);
 
-		(new AsyncUIUpdate()).start();
+		updateInformation();
+
 	}
 
 	private void setRepeatButtonImage() {
@@ -215,6 +216,8 @@ public class PlayingActivity extends Activity {
 	}
 
 	private void setPlayPauseButtonImage() {
+
+		Log.d(TAG, "Playing ? " + mPlayer.isPlaying());
 		if (mPlayer.isPlaying()) {
 			playpause.setImageResource(R.drawable.ic_media_pause);
 		} else {
@@ -239,66 +242,49 @@ public class PlayingActivity extends Activity {
 		super.onDestroy();
 	}
 
-	private class MyPlayerListener extends PlayerService.PlayerListener {
-
-		private Song mSong;
-
-		public MyPlayerListener() {
-			onPlayerStopped();
-		}
-
-		private void setCover() {
+	private void updateInformation() {
+		if (mPlayer != null) {
+			Song mSong = mPlayer.getSong();
 			if (mSong != null) {
+				mTrackName.setText(mSong.name);
+				mArtistName.setText(mSong.artist);
+				mAlbumName.setText(mSong.album);
 				ArtworkAsyncHelper.updateArtwork(PlayingActivity.this, artwork,
 						mSong.art, R.drawable.albumart_mp_unknown,
 						mArtworkWidth, mArtWorkHeight, false);
+				return;
 			}
 		}
+		mTrackName.setText("No Playing.");
+		mArtistName.setText("");
+		mAlbumName.setText("");
+		artwork.setImageResource(R.drawable.albumart_mp_unknown);
 
-		@Override
-		public void onBuffering(int buffer) {
-		}
-
-		@Override
-		public void onPlayerStopped() {
-			mSong = null;
-			mTrackName.setText("No Playing.");
-			mArtistName.setText("");
-			mAlbumName.setText("");
-			artwork.setImageResource(R.drawable.albumart_mp_unknown);
-		}
-
-		@Override
-		public void onNewSongPlaying(Song song) {
-			mSong = song;
-			mTrackName.setText(mSong.name);
-			mArtistName.setText(mSong.artist);
-			mAlbumName.setText(mSong.album);
-			setCover();
-		}
-
-		@Override
-		public void onTogglePlaying(boolean playing) {
-			setPlayPauseButtonImage();
-
-		}
 	}
 
-	private void setProgress() {
+	@Override
+	public void onBuffering(int buffer) {
+	}
+
+	@Override
+	public void onStatusChange() {
+		updateInformation();
+	}
+
+	@Override
+	public void onTogglePlaying(boolean playing) {
+		setPlayPauseButtonImage();
+	}
+
+	@Override
+	public void onTick(int position, int duration, int buffer) {
 		if (isCurrentlySeek) {
 			return;
-		}
-		int duration = 0;
-		int position = -1;
-		if (mPlayer != null) {
-			position = mPlayer.getCurrentPosition();
-			duration = mPlayer.getDuration();
 		}
 		if (duration > 0) {
 			long pos = 1000L * position / duration;
 			mProgress.setProgress((int) pos);
-			int percent = mPlayer.getBuffer();
-			mProgress.setSecondaryProgress(percent * 10);
+			mProgress.setSecondaryProgress(buffer * 10);
 			mTimeView.setText(Utils.stringForTime(position));
 			mDurationView.setText(Utils.stringForTime(duration));
 		} else {
@@ -306,20 +292,6 @@ public class PlayingActivity extends Activity {
 			mProgress.setSecondaryProgress(0);
 			mTimeView.setText(Utils.stringForTime(0));
 			mDurationView.setText(Utils.stringForTime(0));
-		}
-	}
-
-	private class AsyncUIUpdate extends Handler {
-
-		public void start() {
-			super.sendEmptyMessage(0);
-		}
-
-		@Override
-		public void handleMessage(Message msg) {
-			setProgress();
-			msg = obtainMessage(0);
-			sendMessageDelayed(msg, 1000);
 		}
 	}
 

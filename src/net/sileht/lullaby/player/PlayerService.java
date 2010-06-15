@@ -37,45 +37,57 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
-public class PlayerService extends Service {
-
-	private MediaPlayer mPlayer;
+public class PlayerService extends Service implements
+		MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener,
+		MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnErrorListener {
 
 	private static String TAG = "LullabyPlayer";
 	private static String PREFS_NAME = "LullabyPlayerService";
 
 	private Song mSong;
+	private MediaPlayer mPlayer;
 	private int mBuffering = -1;
 
-	private Boolean mPlayAfterPrepared = true;
+	private boolean mPlayAfterPrepared = false;
 
 	private enum STATE {
-		Idle, Initialised, Prepared, Started, Paused, Stopped
+		Idle, Initialised, Preparing, Prepared, Started, Paused, Stopped
 	}
 
 	private STATE mState;
 
 	private MyPhoneStateListener mPhoneStateListener;
-	private MyMediaPlayerListener mMediaPlayerListener;
 
-	private ArrayList<PlayerListener> mPlayerListeners;
+	private ArrayList<OnStatusListener> mPlayerListeners;
+
+	private Handler mTickHandler = new Handler();
+	private Runnable mTickTask = new Runnable() {
+		@Override
+		public void run() {
+			for (OnStatusListener obj : mPlayerListeners) {
+				obj.onTick(getCurrentPosition(), getDuration(), getBuffer());
+			}
+			mTickHandler.postDelayed(this, 100);
+		}
+	};
 
 	public PlayingPlaylist mPlaylist;
 
-	public static abstract class PlayerListener {
-		abstract public void onTogglePlaying(boolean playing);
+	public static interface OnStatusListener {
+		public void onBuffering(int buffer);
 
-		abstract public void onNewSongPlaying(Song song);
+		public void onTogglePlaying(boolean playing);
 
-		abstract public void onBuffering(int buffer);
+		public void onStatusChange();
 
-		abstract public void onPlayerStopped();
+		public void onTick(int position, int duration, int buffer);
 	}
 
 	@Override
@@ -90,23 +102,21 @@ public class PlayerService extends Service {
 
 		mPhoneStateListener = new MyPhoneStateListener();
 
-		mPlayerListeners = new ArrayList<PlayerListener>();
-
-		mMediaPlayerListener = new MyMediaPlayerListener();
+		mPlayerListeners = new ArrayList<OnStatusListener>();
 
 		mPlayer = new MediaPlayer();
 		mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-		mPlayer.setOnErrorListener(mMediaPlayerListener);
-		mPlayer.setOnPreparedListener(mMediaPlayerListener);
-		mPlayer.setOnCompletionListener(mMediaPlayerListener);
-		mPlayer.setOnBufferingUpdateListener(mMediaPlayerListener);
+		mPlayer.setOnErrorListener(this);
+		mPlayer.setOnPreparedListener(this);
+		mPlayer.setOnCompletionListener(this);
+		mPlayer.setOnBufferingUpdateListener(this);
 
 		setState(STATE.Idle);
 
 		SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME,
 				MODE_PRIVATE);
 		String id = settings.getString("song_id", null);
-		
+
 		if (id != null && !id.equals("")) {
 			AmpacheRequest request = new AmpacheRequest(null, new String[] {
 					"song", id }) {
@@ -114,14 +124,16 @@ public class PlayerService extends Service {
 				@Override
 				public void add_objects(ArrayList list) {
 					if (!list.isEmpty() && mSong == null) {
-						prepareSong((Song) list.get(0), false);
+						setSong((Song) list.get(0));
 					}
 				}
 			};
 			request.send(0);
 		}
-
+		mPlaylist.load(ctx);
 		Log.v(TAG, "Lullaby Player Service Start");
+		mTickHandler.postDelayed(mTickTask, 100);
+
 	}
 
 	@Override
@@ -135,6 +147,7 @@ public class PlayerService extends Service {
 	public void onDestroy() {
 		stopForeground(true);
 		Context ctx = getApplicationContext();
+		mPlaylist.save(ctx);
 		SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME,
 				MODE_PRIVATE);
 		SharedPreferences.Editor editor = settings.edit();
@@ -144,7 +157,7 @@ public class PlayerService extends Service {
 			editor.putString("song_id", null);
 		}
 		editor.commit();
-		Log.v(TAG, "DestroyService");
+		Log.d(TAG, "DestroyService");
 	}
 
 	private void setState(STATE state) {
@@ -158,10 +171,10 @@ public class PlayerService extends Service {
 				+ isPlaying + " - " + mState);
 
 		if (isPlaying != isPreviouslyPlaying) {
+			for (OnStatusListener obj : mPlayerListeners) {
+				obj.onTogglePlaying(isPlaying);
+			}
 			if (isPlaying) {
-				for (PlayerListener obj : mPlayerListeners) {
-					obj.onTogglePlaying(isPlaying());
-				}
 				if (mSong != null) {
 					RemoteViews views = new RemoteViews(this.getPackageName(),
 							R.layout.statusbar);
@@ -176,129 +189,17 @@ public class PlayerService extends Service {
 					n.tickerText = "Playing " + mSong.name;
 					n.flags |= Notification.FLAG_ONGOING_EVENT;
 					n.contentView = views;
-					n.contentIntent = PendingIntent.getActivity(this, 0,
-							new Intent(this, PlayingActivity.class), 0);
+					Intent i = new Intent(this, PlayingActivity.class);
+					i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+					n.contentIntent = PendingIntent.getActivity(this, 0, i, 0);
 					startForeground(1, n);
+
 				}
 			} else {
 				stopForeground(true);
 			}
-
 		}
-
-		String st = "";
-		switch (state) {
-		case Idle:
-			st = "Idle";
-			break;
-		case Initialised:
-			st = "Initialised";
-			break;
-		case Prepared:
-			st = "Prepared";
-			break;
-		case Started:
-			st = "Started";
-			break;
-		case Paused:
-			st = "Paused";
-			break;
-		case Stopped:
-			st = "Stopped";
-			break;
-		default:
-			st = "Unknown";
-			break;
-		}
-		Log.v(TAG, "setState(" + st + ")");
-	}
-
-	private void updateBuffer(int buffer) {
-		mBuffering = buffer;
-		for (PlayerListener obj : mPlayerListeners) {
-			obj.onBuffering(mBuffering);
-		}
-	}
-
-	public int getBuffer() {
-		return mBuffering;
-	}
-
-	public Song getSong() {
-		return mSong;
-	}
-
-	private void prepareSong(Song song, boolean startPlaying) {
-
-		setState(STATE.Idle);
-
-		String uri = song.url.replaceFirst(".ogg$", ".mp3").replaceFirst(
-				".flac$", ".mp3").replaceFirst(".m4a$", ".mp3").replaceAll(
-				"sid=[^&]+", "sid=" + Lullaby.comm.authToken);
-		Log.v(TAG, "Playing uri: " + uri);
-
-		if (mState == STATE.Prepared || mState == STATE.Started
-				|| mState == STATE.Paused) {
-			mPlayer.stop();
-		}
-
-		mPlayAfterPrepared = startPlaying;
-		mSong = song;
-
-		updateBuffer(-1);
-
-		for (PlayerListener obj : mPlayerListeners) {
-			obj.onNewSongPlaying(mSong);
-		}
-
-		mPlayer.reset();
-		try {
-			mPlayer.setDataSource(uri);
-			setState(STATE.Initialised);
-			mPlayer.prepareAsync();
-		} catch (Exception blah) {
-			return;
-		}
-	}
-
-	protected void playSong(Song song) {
-		Lullaby.comm.ping();
-		prepareSong(song, true);
-	}
-
-	public void doPlaybackPauseResume() {
-		if (mState == STATE.Started || mState == STATE.Paused) {
-			if (mPlayer.isPlaying()) {
-				mPlayer.pause();
-				setState(STATE.Paused);
-			} else {
-				mPlayer.start();
-				setState(STATE.Started);
-			}
-		} else if (mState == STATE.Initialised) {
-			mPlayAfterPrepared = !mPlayAfterPrepared;
-		} else if (mState == STATE.Prepared) {
-			mPlayer.start();
-			setState(STATE.Started);
-		} else {
-			mPlaylist.playNextAutomatic();
-		}
-	}
-
-	public void doPlaybackStop() {
-		for (PlayerListener obj : mPlayerListeners) {
-			obj.onPlayerStopped();
-		}
-		setState(STATE.Stopped);
-		mPlayer.stop();
-		mPlayer.reset();
-	}
-
-	public void doSeekTo(int position) {
-		if (mState == STATE.Prepared || mState == STATE.Started
-				|| mState == STATE.Paused) {
-			mPlayer.seekTo(position);
-		}
+		Log.d(TAG, "setState(" + mState + ")");
 	}
 
 	public boolean isSeekable() {
@@ -307,7 +208,7 @@ public class PlayerService extends Service {
 	}
 
 	public boolean isPlaying() {
-		return (mState == STATE.Initialised && mPlayAfterPrepared)
+		return (mPlayAfterPrepared && (mState == STATE.Initialised || mState == STATE.Preparing))
 				|| mState == STATE.Started;
 	}
 
@@ -321,65 +222,151 @@ public class PlayerService extends Service {
 	}
 
 	public int getDuration() {
-		if (mState == STATE.Initialised || mState == STATE.Prepared
-				|| mState == STATE.Started || mState == STATE.Paused) {
+		if (mState == STATE.Initialised || mState == STATE.Preparing
+				|| mState == STATE.Prepared || mState == STATE.Started
+				|| mState == STATE.Paused) {
 			try {
 				return Integer.parseInt(mSong.time) * 1000;
 			} catch (Exception poo) {
 			}
-			if (mState != STATE.Initialised) {
+			if (mState != STATE.Initialised && mState != STATE.Preparing) {
 				return mPlayer.getDuration();
 			}
 		}
 		return 0;
 	}
 
-	public void setPlayerListener(PlayerListener StatusChangeObject) {
-		mPlayerListeners.add(StatusChangeObject);
+	public int getBuffer() {
+		return mBuffering;
+	}
+
+	public Song getSong() {
+		return mSong;
+	}
+
+	public void setOnPlayerListener(OnStatusListener statusChangeObject) {
+		mPlayerListeners.add(statusChangeObject);
 		if (mSong != null) {
-			StatusChangeObject.onNewSongPlaying(mSong);
-			StatusChangeObject.onTogglePlaying(isPlaying());
+			statusChangeObject.onStatusChange();
+			statusChangeObject.onTogglePlaying(isPlaying());
 		}
 	}
 
-	private class MyMediaPlayerListener implements
-			MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener,
-			MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnErrorListener {
-		@Override
-		public boolean onError(MediaPlayer mp, int what, int extra) {
-			Log.e(TAG, "Player error (" + what + "," + extra + ")");
-			return false;
+	private void setSong(Song song) {
+
+		setState(STATE.Idle);
+
+		String uri = song.url.replaceFirst(".ogg$", ".mp3").replaceFirst(
+				".flac$", ".mp3").replaceFirst(".m4a$", ".mp3").replaceAll(
+				"sid=[^&]+", "sid=" + Lullaby.comm.authToken);
+		Log.v(TAG, "Playing uri: " + uri);
+
+		if (mState == STATE.Prepared || mState == STATE.Started
+				|| mState == STATE.Paused) {
+			mPlayer.stop();
 		}
 
-		@Override
-		public void onPrepared(MediaPlayer mp) {
-			setState(STATE.Prepared);
-			if (mPlayAfterPrepared) {
-				mPlayer.start();
-				setState(STATE.Started);
-			}/* else {
+		mSong = song;
+
+		onBufferingUpdate(mPlayer, -1);
+
+		for (OnStatusListener obj : mPlayerListeners) {
+			obj.onStatusChange();
+		}
+
+		mPlayer.reset();
+		try {
+			mPlayer.setDataSource(uri);
+			setState(STATE.Initialised);
+		} catch (Exception blah) {
+			return;
+		}
+	}
+
+	protected void playSong(Song song) {
+		Lullaby.comm.ping();
+		setSong(song);
+		mPlayAfterPrepared = true;
+		mPlayer.prepareAsync();
+		setState(STATE.Preparing);
+	}
+
+	public void doPlaybackPauseResume() {
+		if (mState == STATE.Started || mState == STATE.Paused) {
+			if (mPlayer.isPlaying()) {
 				mPlayer.pause();
 				setState(STATE.Paused);
-			}*/
-			mPlayAfterPrepared = true;
-		}
-
-		@Override
-		public void onCompletion(MediaPlayer mp) {
-			mPlayer.stop();
-			setState(STATE.Stopped);
-			mSong = null;
-
-			Log.v(TAG, "Completion");
-			Song song = mPlaylist.playNextAutomatic();
-			if (song == null) {
-				doPlaybackStop();
+			} else {
+				mPlayer.start();
+				setState(STATE.Started);
 			}
+		} else if (mState == STATE.Preparing) {
+			mPlayAfterPrepared = !mPlayAfterPrepared;
+		} else if (mState == STATE.Prepared) {
+			mPlayer.start();
+			setState(STATE.Started);
+		} else if (mState == STATE.Initialised) {
+			mPlayAfterPrepared = true;
+			mPlayer.prepareAsync();
+			setState(STATE.Preparing);
+		} else {
+			mPlaylist.playNextAutomatic();
 		}
+	}
 
-		@Override
-		public void onBufferingUpdate(MediaPlayer mp, int buffer) {
-			updateBuffer(buffer);
+	public void doPlaybackStop() {
+		mPlayAfterPrepared = false;
+		for (OnStatusListener obj : mPlayerListeners) {
+			obj.onStatusChange();
+		}
+		setState(STATE.Stopped);
+		mPlayer.stop();
+		mPlayer.reset();
+	}
+
+	public void doSeekTo(int position) {
+		if (mState == STATE.Prepared || mState == STATE.Started
+				|| mState == STATE.Paused) {
+			mPlayer.seekTo(position);
+		}
+	}
+
+	@Override
+	public boolean onError(MediaPlayer mp, int what, int extra) {
+		Log.e(TAG, "Player error (" + what + "," + extra + ")");
+		return false;
+	}
+
+	@Override
+	public void onPrepared(MediaPlayer mp) {
+		setState(STATE.Prepared);
+		if (mPlayAfterPrepared) {
+			mPlayer.start();
+			setState(STATE.Started);
+		}/*
+		 * else { mPlayer.pause(); setState(STATE.Paused); }
+		 */
+		mPlayAfterPrepared = false;
+	}
+
+	@Override
+	public void onCompletion(MediaPlayer mp) {
+		mPlayer.stop();
+		setState(STATE.Stopped);
+		mSong = null;
+
+		Log.v(TAG, "Completion");
+		Song song = mPlaylist.playNextAutomatic();
+		if (song == null) {
+			doPlaybackStop();
+		}
+	}
+
+	@Override
+	public void onBufferingUpdate(MediaPlayer mp, int buffer) {
+		mBuffering = buffer;
+		for (OnStatusListener obj : mPlayerListeners) {
+			obj.onBuffering(mBuffering);
 		}
 	}
 

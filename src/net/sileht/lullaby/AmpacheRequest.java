@@ -45,6 +45,7 @@ public abstract class AmpacheRequest extends Handler {
 	protected String[] mDirective;
 	protected int mMax;
 	protected boolean mQuick;
+	protected boolean mUseCache;
 
 	private ArrayList<Object> mCachedData;
 
@@ -66,6 +67,7 @@ public abstract class AmpacheRequest extends Handler {
 		mContext = context;
 		mDirective = directive;
 		mQuick = quick;
+		mUseCache = useCache;
 		mCachedData = new ArrayList<Object>();
 	}
 
@@ -191,17 +193,12 @@ public abstract class AmpacheRequest extends Handler {
 	}
 
 	public void send() {
-		send(1);
-	}
-
-	public void send(int userCache) {
-		if (userCache == 1 && readCache()) {
+		if (mUseCache && readCache()) {
 			add_objects(mCachedData);
 		} else {
 			Message requestMsg = new Message();
 			requestMsg.what = 1;
 			requestMsg.arg1 = 0;
-			requestMsg.arg2 = userCache;
 			requestMsg.obj = mDirective;
 			requestMsg.replyTo = new Messenger(this);
 			Log.d(TAG, "Request send for " + mDirective[0]);
@@ -239,7 +236,7 @@ public abstract class AmpacheRequest extends Handler {
 			return;
 		switch (msg.what) {
 		case 1:
-			if (msg.arg2 == 1) {
+			if (mUseCache) {
 				mCachedData.addAll((ArrayList<Object>) msg.obj);
 			}
 			add_objects((ArrayList<?>) msg.obj);
@@ -255,7 +252,7 @@ public abstract class AmpacheRequest extends Handler {
 
 				showProgress();
 			} else {
-				if (msg.arg2 == 1) {
+				if (mUseCache) {
 					writeCache();
 				}
 				hideProgress();

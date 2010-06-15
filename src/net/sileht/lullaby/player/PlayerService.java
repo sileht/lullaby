@@ -119,7 +119,7 @@ public class PlayerService extends Service implements
 
 		if (id != null && !id.equals("")) {
 			AmpacheRequest request = new AmpacheRequest(null, new String[] {
-					"song", id }) {
+					"song", id }, true, false) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void add_objects(ArrayList list) {
@@ -128,7 +128,7 @@ public class PlayerService extends Service implements
 					}
 				}
 			};
-			request.send(0);
+			request.send();
 		}
 		mPlaylist.load(ctx);
 		Log.v(TAG, "Lullaby Player Service Start");

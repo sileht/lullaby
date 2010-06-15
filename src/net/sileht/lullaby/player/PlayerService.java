@@ -145,6 +145,7 @@ public class PlayerService extends Service implements
 
 	@Override
 	public void onDestroy() {
+		doPlaybackStop();
 		stopForeground(true);
 		Context ctx = getApplicationContext();
 		mPlaylist.save(ctx);

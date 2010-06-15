@@ -7,3 +7,5 @@ Lullaby 1.1
 - Quick cache metadata
 - Add Playing Activity
 - Add drawable for hdpi device
+- Change Player into a Service
+- Better cover cache and display 

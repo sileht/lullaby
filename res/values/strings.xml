@@ -8,7 +8,7 @@
     <string name="fast_scroll_numeric_alphabet">\u00200123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
     <string name="prefs_name">DroidZik Preferences</string>
     <string name="server_preferences">Ampache Server Configuration</string>
-    <string name="title_server_preference">Ampache Servuer URL</string>
+    <string name="title_server_preference">Ampache Server URL</string>
     <string name="summary_server_preference">URL for your ampache server (ie: http://example.com/ampache )</string>
     <string name="dialog_server_preference">URL</string>
     <string name="title_username_preference">Username</string>

@@ -86,7 +86,17 @@ public abstract class AmpacheRequest extends Handler {
 		}
 		return getCacheFilePath(filename);
 	}
-
+	
+	public boolean clearCache(){
+		Utils.checkStorage();
+		if (!Utils.mExternalStorageWriteable) {
+			return false;
+		}
+		String cacheFilePath = getCacheFilePath();
+		(new File(cacheFilePath)).delete();
+		return true;
+	}
+	
 	private boolean writeCache() {
 
 		Utils.checkStorage();

@@ -19,6 +19,7 @@ package net.sileht.lullaby;
  * | Boston, MA  02111-1307, USA.                                           |
  * +------------------------------------------------------------------------+
  */
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -27,6 +28,7 @@ import net.sileht.lullaby.objects.Album;
 import net.sileht.lullaby.objects.Artist;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -34,6 +36,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,7 +48,8 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorTreeAdapter;
 import android.widget.TextView;
 
-public class ArtistAlbumsActivity extends Activity {
+public class ArtistAlbumsActivity extends Activity implements
+		SharedPreferences.OnSharedPreferenceChangeListener {
 
 	private static String TAG = "LullabyArtistAlbumsActivity";
 
@@ -54,6 +58,8 @@ public class ArtistAlbumsActivity extends Activity {
 
 	private SimpleCursorTreeAdapter mAdapter;
 	private ExpandableListView mListView;
+
+	private AmpacheRequest mRequest;
 
 	private ViewUtils mViewUtils;
 
@@ -70,6 +76,46 @@ public class ArtistAlbumsActivity extends Activity {
 		mListView.setOnItemLongClickListener(mViewUtils);
 		mListView.setOnCreateContextMenuListener(mViewUtils);
 
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		if (prefs.getBoolean("clear_album", false)) {
+			clear();
+		}
+		setup();
+		mViewUtils.doBindService();
+		prefs.registerOnSharedPreferenceChangeListener(this);
+
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+			String key) {
+		Log.v(TAG, "getPref:" + key);
+		if (sharedPreferences.getBoolean("clear_artists", false)) {
+			clear();
+			setup();
+		}
+	}
+
+	private void clear() {
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putBoolean("clear_artists", false);
+		editor.commit();
+
+		if (artistsData != null)
+			stopManagingCursor(artistsData);
+
+		if (mRequest != null)
+			mRequest.stop();
+
+		albumsData = null;
+		artistsData = null;
+
+	}
+
+	private void setup() {
 		if (artistsData == null || albumsData == null) {
 			// Tell them we're loading
 
@@ -81,8 +127,7 @@ public class ArtistAlbumsActivity extends Activity {
 
 			mAdapter = getNewAdapter();
 
-			AmpacheRequest request = new AmpacheRequest(this, new String[] {
-					"artists", "" }) {
+			mRequest = new AmpacheRequest(this, new String[] { "artists", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void add_objects(ArrayList list) {
@@ -93,12 +138,11 @@ public class ArtistAlbumsActivity extends Activity {
 					artistsData.requery();
 				}
 			};
-			request.send();
+			mRequest.send();
 		} else {
 			mAdapter = getNewAdapter();
 		}
 		mListView.setAdapter(mAdapter);
-		mViewUtils.doBindService();
 	}
 
 	@Override
@@ -183,9 +227,9 @@ public class ArtistAlbumsActivity extends Activity {
 			}
 
 			setFilterQueryProvider(this);
-			mIndexer = new AlphabetIndexer(mCursor, mCursor
-					.getColumnIndex(ViewUtils.ARTIST_NAME), mRessource
-					.getString(R.string.fast_scroll_numeric_alphabet));
+			mIndexer = new AlphabetIndexer(mCursor,
+					mCursor.getColumnIndex(ViewUtils.ARTIST_NAME),
+					mRessource.getString(R.string.fast_scroll_numeric_alphabet));
 		}
 
 		/**
@@ -235,9 +279,9 @@ public class ArtistAlbumsActivity extends Activity {
 						for (Album album : (ArrayList<Album>) list) {
 							MatrixCursor cur = ((ArtistAlbumsActivity) this.mContext).albumsData
 									.get(this.mDirective[1]);
-							cur.newRow().add(album.id).add(album.name).add(
-									album.artist).add(album.tracks).add(
-									album.art);
+							cur.newRow().add(album.id).add(album.name)
+									.add(album.artist).add(album.tracks)
+									.add(album.art);
 							cur.requery();
 						}
 					}
@@ -382,7 +426,8 @@ public class ArtistAlbumsActivity extends Activity {
 			MatrixCursor nc = new MatrixCursor(ViewUtils.mArtistColumnName);
 			mCursor.moveToFirst();
 			do {
-				if (mCursor.getString(1).startsWith((String) text)) {
+				if (mCursor.getString(1).toLowerCase()
+						.startsWith(((String) text).toLowerCase())) {
 					MatrixCursor.RowBuilder rb = nc.newRow();
 					for (int i = 0; i < mCursor.getColumnCount(); i++) {
 						rb = rb.add(mCursor.getString(i));
@@ -390,9 +435,9 @@ public class ArtistAlbumsActivity extends Activity {
 				}
 			} while (mCursor.moveToNext());
 
-			mIndexer = new AlphabetIndexer(nc, nc
-					.getColumnIndex(ViewUtils.ARTIST_NAME), mRessource
-					.getString(R.string.fast_scroll_numeric_alphabet));
+			mIndexer = new AlphabetIndexer(nc,
+					nc.getColumnIndex(ViewUtils.ARTIST_NAME),
+					mRessource.getString(R.string.fast_scroll_numeric_alphabet));
 			return nc;
 		}
 	}

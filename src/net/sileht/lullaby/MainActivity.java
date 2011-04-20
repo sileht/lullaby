@@ -30,12 +30,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.gesture.GestureOverlayView;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,6 +54,10 @@ import android.widget.Toast;
 
 public class MainActivity extends ActivityGroup implements
 		PlayerService.OnStatusListener {
+	
+	static final String TAG = "LullabyMainActivity";	
+	
+	private static String PREFS_NAME = "LullabyPrefs";
 
 	// private static final int SWIPE_MAX_OFF_PATH = 250; // initial value
 	private static final int SWIPE_MAX_OFF_PATH = 300;
@@ -63,11 +70,13 @@ public class MainActivity extends ActivityGroup implements
 	private GestureDetector gestureDetector;
 	private View.OnTouchListener gestureListener;
 
+	
 	private TextView line1;
 	private TextView line2;
 	private ImageButton playpause;
 	private ImageView artwork;
 	private GestureOverlayView bottombar;
+	private TabHost mTabHost;
 
 	// private static final String TAG = "LullabyMainActivity";
 
@@ -95,7 +104,9 @@ public class MainActivity extends ActivityGroup implements
 		super.onCreate(savedInstanceState);
 
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-
+		
+		setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
+		
 		if (mArtworkWidth < 0) {
 			Bitmap icon = ((BitmapDrawable) this.getResources().getDrawable(
 					R.drawable.albumart_mp_unknown_list)).getBitmap();
@@ -113,36 +124,36 @@ public class MainActivity extends ActivityGroup implements
 
 		Resources res = getResources(); // Resource object to get Drawables
 
-		TabHost tabHost = (TabHost) findViewById(R.id.tabhost); // The activity
+		mTabHost = (TabHost) findViewById(R.id.tabhost); // The activity
 		// TabHost
-		tabHost.setup(this.getLocalActivityManager());
+		mTabHost.setup(this.getLocalActivityManager());
 
 		TabHost.TabSpec spec; // Resusable TabSpec for each tab
 		Intent intent; // Reusable Intent for each tab
 
 		intent = new Intent().setClass(this, PlayingPlaylistActivity.class);
-		spec = tabHost.newTabSpec("playback").setIndicator("Playing",
+		spec = mTabHost.newTabSpec("playback").setIndicator("Playing",
 				res.getDrawable(R.drawable.ic_tab_playback)).setContent(intent);
-		tabHost.addTab(spec);
+		mTabHost.addTab(spec);
 
 		//  Artist
 		intent = new Intent().setClass(this, ArtistAlbumsActivity.class);
-		spec = tabHost.newTabSpec("artists").setIndicator("Artists",
+		spec = mTabHost.newTabSpec("artists").setIndicator("Artists",
 				res.getDrawable(R.drawable.ic_tab_artists)).setContent(intent);
-		tabHost.addTab(spec);
+		mTabHost.addTab(spec);
 
 		intent = new Intent().setClass(this, AlbumActivity.class);
-		spec = tabHost.newTabSpec("albums").setIndicator("Albums",
+		spec = mTabHost.newTabSpec("albums").setIndicator("Albums",
 				res.getDrawable(R.drawable.ic_tab_albums)).setContent(intent);
-		tabHost.addTab(spec);
+		mTabHost.addTab(spec);
 
 		intent = new Intent().setClass(this, PlaylistsActivity.class);
-		spec = tabHost.newTabSpec("playlist").setIndicator("Playlists",
+		spec = mTabHost.newTabSpec("playlist").setIndicator("Playlists",
 				res.getDrawable(R.drawable.ic_tab_playlists))
 				.setContent(intent);
-		tabHost.addTab(spec);
+		mTabHost.addTab(spec);
 
-		tabHost.setCurrentTab(0);
+		mTabHost.setCurrentTab(0);
 
 		line1 = (TextView) findViewById(R.id.line1);
 		line2 = (TextView) findViewById(R.id.line2);
@@ -202,8 +213,8 @@ public class MainActivity extends ActivityGroup implements
 
 	@Override
 	protected void onDestroy() {
-		super.onDestroy();
 		doUnbindService();
+		super.onDestroy();
 	}
 
 	@Override
@@ -268,16 +279,19 @@ public class MainActivity extends ActivityGroup implements
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		menu.add(0, MENU_CLEAR, 0, "Clear playlist").setIcon(
+		if (mTabHost.getCurrentTab() == 0){
+			menu.add(0, MENU_CLEAR, 0, "Clear playlist").setIcon(
 				android.R.drawable.ic_menu_close_clear_cancel);
-		menu.add(0, MENU_SAVE, 0, "Save playlist").setIcon(
+			menu.add(0, MENU_SAVE, 0, "Save playlist").setIcon(
 				android.R.drawable.ic_menu_save);
-		menu.add(0, MENU_LOAD, 0, "Load playlist").setIcon(
+			menu.add(0, MENU_LOAD, 0, "Load playlist").setIcon(
 				android.R.drawable.ic_menu_edit);
+		} else {
+			menu.add(0, MENU_CLEARCACHE, 0, "Refresh").setIcon(
+				android.R.drawable.ic_menu_close_clear_cancel);
+		}
 		menu.add(0, MENU_SETTINGS, 0, "Settings").setIcon(
 				android.R.drawable.ic_menu_preferences);
-		menu.add(0, MENU_CLEARCACHE, 0, "Clear cache").setIcon(
-				android.R.drawable.ic_menu_close_clear_cancel);
 		menu.add(0, MENU_EXIT, 0, "Exit").setIcon(
 				android.R.drawable.ic_menu_close_clear_cancel);
 		return true;
@@ -308,6 +322,16 @@ public class MainActivity extends ActivityGroup implements
 				f.delete();
 			}
 			root.delete();
+
+			SharedPreferences prefs = 
+			    PreferenceManager.getDefaultSharedPreferences(this);
+			SharedPreferences.Editor editor = prefs.edit();
+			editor.putBoolean("clear_artists", true);
+			editor.putBoolean("clear_albums", true);
+			editor.putBoolean("clear_playlist", true);
+			editor.commit();
+			Log.v(TAG,"setPref:clear="+ mTabHost.getCurrentTabTag());
+			
 			return true;
 		case MENU_EXIT:
 			onDestroy();

@@ -26,10 +26,13 @@ import net.sileht.lullaby.SongsActivity.ViewHolder;
 import net.sileht.lullaby.objects.Playlist;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
@@ -40,8 +43,14 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
-public class PlaylistsActivity extends Activity {
+public class PlaylistsActivity extends Activity implements
+		SharedPreferences.OnSharedPreferenceChangeListener {
+
+	static final String TAG = "LullabyPlaylistActivity";
+
 	private MatrixCursor playlistsData;
+
+	private AmpacheRequest mRequest;
 
 	private SimpleCursorAdapter mAdapter;
 	ViewUtils mViewUtils;
@@ -56,33 +65,74 @@ public class PlaylistsActivity extends Activity {
 		lv.setOnItemLongClickListener(mViewUtils);
 		lv.setOnCreateContextMenuListener(mViewUtils);
 
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+
+		if (prefs.getBoolean("clear_albums", false)) {
+			clear();
+		}
+		setup();
+
+		mViewUtils.doBindService();
+		prefs.registerOnSharedPreferenceChangeListener(this);
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+			String key) {
+		Log.v(TAG, "getPref:" + key);
+		if (sharedPreferences.getBoolean("clear_playlists", false)) {
+			clear();
+			setup();
+		}
+	}
+
+	private void clear() {
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putBoolean("clear_playlists", false);
+		editor.commit();
+		if (playlistsData != null)
+			stopManagingCursor(playlistsData);
+		playlistsData = null;
+		if (mRequest != null)
+			mRequest.stop();
+	}
+
+	private void setup() {
 		if (playlistsData == null) {
 			// Tell them we're loading
 
 			setProgressBarVisibility(true);
 
+			if (playlistsData != null)
+				stopManagingCursor(playlistsData);
+			if (mRequest != null)
+				mRequest.stop();
+
 			playlistsData = new MatrixCursor(ViewUtils.mPlaylistsColumnName);
 			startManagingCursor(playlistsData);
 
-			AmpacheRequest request = new AmpacheRequest(this, new String[] {
-					"playlists", "" }) {
+			mRequest = new AmpacheRequest(this,
+					new String[] { "playlists", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void add_objects(ArrayList list) {
 					for (Playlist playlist : (ArrayList<Playlist>) list) {
-						playlistsData.newRow().add(playlist.id).add(
-								playlist.name).add(playlist.tracks).add(
-								playlist.owner);
+						playlistsData.newRow().add(playlist.id)
+								.add(playlist.name).add(playlist.tracks)
+								.add(playlist.owner);
 
 					}
 					playlistsData.requery();
 				}
 			};
-			request.send();
+			mRequest.send();
 		}
 		mAdapter = new PlaylistsAdapter(this, playlistsData);
+		ListView lv = (ListView) findViewById(R.id.list);
 		lv.setAdapter(mAdapter);
-		mViewUtils.doBindService();
 	}
 
 	@Override
@@ -105,9 +155,9 @@ public class PlaylistsActivity extends Activity {
 
 			mCursor = cursor;
 			mRessource = context.getResources();
-			mIndexer = new AlphabetIndexer(mCursor, mCursor
-					.getColumnIndex(ViewUtils.PLAYLIST_NAME), mRessource
-					.getString(R.string.fast_scroll_numeric_alphabet));
+			mIndexer = new AlphabetIndexer(mCursor,
+					mCursor.getColumnIndex(ViewUtils.PLAYLIST_NAME),
+					mRessource.getString(R.string.fast_scroll_numeric_alphabet));
 			setFilterQueryProvider(this);
 
 		}
@@ -188,7 +238,8 @@ public class PlaylistsActivity extends Activity {
 			MatrixCursor nc = new MatrixCursor(ViewUtils.mPlaylistsColumnName);
 			mCursor.moveToFirst();
 			do {
-				if (mCursor.getString(1).startsWith((String) text)) {
+				if (mCursor.getString(1).toLowerCase()
+						.startsWith(((String) text).toLowerCase())) {
 					MatrixCursor.RowBuilder rb = nc.newRow();
 					for (int i = 0; i < mCursor.getColumnCount(); i++) {
 						rb = rb.add(mCursor.getString(i));
@@ -196,9 +247,9 @@ public class PlaylistsActivity extends Activity {
 				}
 			} while (mCursor.moveToNext());
 
-			mIndexer = new AlphabetIndexer(nc, nc
-					.getColumnIndex(ViewUtils.PLAYLIST_NAME), mRessource
-					.getString(R.string.fast_scroll_numeric_alphabet));
+			mIndexer = new AlphabetIndexer(nc,
+					nc.getColumnIndex(ViewUtils.PLAYLIST_NAME),
+					mRessource.getString(R.string.fast_scroll_numeric_alphabet));
 			return nc;
 		}
 	}

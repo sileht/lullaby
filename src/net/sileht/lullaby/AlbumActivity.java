@@ -26,6 +26,7 @@ import net.sileht.lullaby.backend.ArtworkAsyncHelper;
 import net.sileht.lullaby.objects.Album;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -33,6 +34,8 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
@@ -43,12 +46,15 @@ import android.widget.SectionIndexer;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
-public class AlbumActivity extends Activity {
+public class AlbumActivity extends Activity implements
+		SharedPreferences.OnSharedPreferenceChangeListener {
 
 	static final String TAG = "LullabyAlbumActivity";
 
 	private MatrixCursor albumsData;
 	private SimpleCursorAdapter mAdapter;
+
+	private AmpacheRequest mRequest;
 
 	private ViewUtils mViewUtils;
 
@@ -62,6 +68,44 @@ public class AlbumActivity extends Activity {
 		lv.setOnItemLongClickListener(mViewUtils);
 		lv.setOnCreateContextMenuListener(mViewUtils);
 
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+
+		if (prefs.getBoolean("clear_albums", false)) {
+			clear();
+		}
+		setup();
+
+		mViewUtils.doBindService();
+		prefs.registerOnSharedPreferenceChangeListener(this);
+
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+			String key) {
+		Log.v(TAG, "getPref:" + key);
+		if (sharedPreferences.getBoolean("clear_albums", false)) {
+			clear();
+			setup();
+		}
+	}
+
+	private void clear() {
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putBoolean("clear_albums", false);
+		editor.commit();
+		if (albumsData != null)
+			stopManagingCursor(albumsData);
+		albumsData = null;
+		if (mRequest != null)
+			mRequest.stop();
+	}
+
+	private void setup() {
+
 		if (albumsData == null) {
 			// Tell them we're loading
 
@@ -70,23 +114,23 @@ public class AlbumActivity extends Activity {
 			albumsData = new MatrixCursor(ViewUtils.mAlbumsColumnName);
 			startManagingCursor(albumsData);
 
-			AmpacheRequest request = new AmpacheRequest(this, new String[] {
-					"albums", "" }) {
+			mRequest = new AmpacheRequest(this, new String[] { "albums", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void add_objects(ArrayList list) {
 					for (Album album : (ArrayList<Album>) list) {
-						albumsData.newRow().add(album.id).add(album.name).add(
-								album.artist).add(album.tracks).add(album.art);
+						albumsData.newRow().add(album.id).add(album.name)
+								.add(album.artist).add(album.tracks)
+								.add(album.art);
 					}
 					albumsData.requery();
 				}
 			};
-			request.send();
+			mRequest.send();
 		}
 		mAdapter = new AlbumsAdapter(this, albumsData);
+		ListView lv = (ListView) findViewById(R.id.list);
 		lv.setAdapter(mAdapter);
-		mViewUtils.doBindService();
 	}
 
 	@Override
@@ -130,9 +174,9 @@ public class AlbumActivity extends Activity {
 			}
 
 			setFilterQueryProvider(this);
-			mIndexer = new AlphabetIndexer(mCursor, mCursor
-					.getColumnIndex(ViewUtils.ALBUM_NAME), mRessource
-					.getString(R.string.fast_scroll_numeric_alphabet));
+			mIndexer = new AlphabetIndexer(mCursor,
+					mCursor.getColumnIndex(ViewUtils.ALBUM_NAME),
+					mRessource.getString(R.string.fast_scroll_numeric_alphabet));
 		}
 
 		/**
@@ -243,7 +287,8 @@ public class AlbumActivity extends Activity {
 			MatrixCursor nc = new MatrixCursor(ViewUtils.mAlbumsColumnName);
 			mCursor.moveToFirst();
 			do {
-				if (mCursor.getString(1).startsWith((String) text)) {
+				if (mCursor.getString(1).toLowerCase()
+						.startsWith(((String) text).toLowerCase())) {
 					MatrixCursor.RowBuilder rb = nc.newRow();
 					for (int i = 0; i < mCursor.getColumnCount(); i++) {
 						rb = rb.add(mCursor.getString(i));
@@ -251,9 +296,9 @@ public class AlbumActivity extends Activity {
 				}
 			} while (mCursor.moveToNext());
 
-			mIndexer = new AlphabetIndexer(nc, nc
-					.getColumnIndex(ViewUtils.ALBUM_NAME), mRessource
-					.getString(R.string.fast_scroll_numeric_alphabet));
+			mIndexer = new AlphabetIndexer(nc,
+					nc.getColumnIndex(ViewUtils.ALBUM_NAME),
+					mRessource.getString(R.string.fast_scroll_numeric_alphabet));
 			return nc;
 		}
 	}

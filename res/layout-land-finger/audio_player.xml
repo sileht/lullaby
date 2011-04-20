@@ -50,14 +50,24 @@
         android:layout_weight="1"
         android:orientation="horizontal"
 	android:gravity="center">
+
         <ImageView
             android:id="@+id/album"
             android:background="@drawable/album_border_small"
             android:layout_width="215dip"
             android:layout_height="200dip"
+	    	android:paddingTop="-15dip"
+	   		android:paddingBottom="-15dip"
             android:layout_marginLeft="10dip"
-            android:layout_marginRight="10dip"
-            android:layout_marginTop="0dip" />
+            android:layout_marginRight="10dip"/>
+
+        <ImageButton android:id="@+id/curplaylist"
+            android:src="@android:color/transparent"
+            android:layout_width="215dip"
+            android:layout_height="200dip"
+            android:layout_marginLeft="-210dip"
+					android:background="@android:color/transparent" />
+	
 
         <!-- This is the LinearLayout that contains function buttons and album/artist/track info -->
         <LinearLayout
@@ -72,21 +82,6 @@
                 android:orientation="horizontal"
                 android:paddingTop="20dip" >
 
-        <LinearLayout
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:visibility="gone">
-
-               <ImageButton android:id="@+id/curplaylist"
-                    android:src="@drawable/ic_mp_current_playlist_btn"
-                    android:layout_width="82dip"
-                    android:layout_height="45dip"
-                    android:layout_marginRight="8dip"
-                    android:nextFocusLeft="@id/curplaylist"/>
-
-        </LinearLayout>
 
                <ImageButton android:id="@+id/shuffle"
                 android:layout_width="50dip"

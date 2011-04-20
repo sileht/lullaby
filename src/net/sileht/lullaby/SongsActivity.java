@@ -164,7 +164,7 @@ public class SongsActivity extends Activity {
 							ViewUtils.mSongsColumnName);
 					mCursor.moveToFirst();
 					do {
-						if (mCursor.getString(1).startsWith((String) text)) {
+						if (mCursor.getString(1).toLowerCase().startsWith(((String) text).toLowerCase())) {
 							MatrixCursor.RowBuilder rb = nc.newRow();
 							for (int i = 0; i < mCursor.getColumnCount(); i++) {
 								rb = rb.add(mCursor.getString(i));

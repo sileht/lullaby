@@ -21,14 +21,12 @@ package net.sileht.lullaby.objects;
  * +------------------------------------------------------------------------+
  */
 
-import android.os.Parcelable;
-import android.os.Parcel;
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.IOException;
-import java.lang.ClassNotFoundException;
 
-import net.sileht.lullaby.Lullaby;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 public class Song extends ampacheObject {
 	public String artist = "";
@@ -53,11 +51,6 @@ public class Song extends ampacheObject {
 
 	public String childString() {
 		return "";
-	}
-
-	/* Replace the old session id with our current one */
-	public String liveUrl() {
-		return url.replaceAll("sid=[^&]+", "sid=" + Lullaby.comm.authToken);
 	}
 
 	public boolean hasChildren() {

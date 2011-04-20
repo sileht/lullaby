@@ -21,6 +21,12 @@ package net.sileht.lullaby.player;
  * | Boston, MA  02111-1307, USA.                                           |
  * +------------------------------------------------------------------------+
  */
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 import net.sileht.lullaby.AmpacheRequest;
@@ -39,6 +45,7 @@ import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -49,7 +56,6 @@ public class PlayerService extends Service implements
 		MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnErrorListener {
 
 	private static String TAG = "LullabyPlayer";
-	private static String PREFS_NAME = "LullabyPlayerService";
 
 	private Song mSong;
 	private MediaPlayer mPlayer;
@@ -90,6 +96,61 @@ public class PlayerService extends Service implements
 		public void onTick(int position, int duration, int buffer);
 	}
 
+	private class LullabyPlayer extends MediaPlayer {
+
+
+		FileOutputStream mFos;
+		InputStream mIs;
+		
+		public void setDataSource(String uri) throws IllegalStateException,
+				IOException, IllegalArgumentException {
+			String temp = getCacheDir() + "stream.dat";
+			
+
+
+			try {
+
+				HttpURLConnection connection = (HttpURLConnection) (new URL(uri))
+						.openConnection();
+
+				connection.setDoOutput(true);
+				connection.setChunkedStreamingMode(0);
+				connection.setInstanceFollowRedirects(true);
+
+				connection.connect();
+
+				mIs = connection.getInputStream();
+				mFos = new FileOutputStream(temp);
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			(new Thread(new Runnable(){
+				public void run() {
+					try {
+						byte[] b = new byte[1024];
+						while (mIs.read(b) > 0) {
+							mFos.write(b);
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
+					try {
+						mIs.close();
+						mFos.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			})).start();
+			super.setDataSource(temp);
+
+		}
+
+	}
+
 	@Override
 	public void onCreate() {
 
@@ -104,7 +165,7 @@ public class PlayerService extends Service implements
 
 		mPlayerListeners = new ArrayList<OnStatusListener>();
 
-		mPlayer = new MediaPlayer();
+		mPlayer = new LullabyPlayer();
 		mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		mPlayer.setOnErrorListener(this);
 		mPlayer.setOnPreparedListener(this);
@@ -113,16 +174,15 @@ public class PlayerService extends Service implements
 
 		setState(STATE.Idle);
 
-		SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME,
-				MODE_PRIVATE);
+		SharedPreferences settings = PreferenceManager
+				.getDefaultSharedPreferences(ctx);
 		String id = settings.getString("song_id", null);
 		int pos = settings.getInt("playlist_pos", -1);
 
-		if (mPlaylist.load(ctx) && pos != -1){
+		if (mPlaylist.load(ctx) && pos != -1) {
 			mPlaylist.setCurrentPosition(pos);
 		}
-		
-		
+
 		if (id != null && !id.equals("")) {
 			AmpacheRequest request = new AmpacheRequest(null, new String[] {
 					"song", id }, true, false) {
@@ -151,12 +211,12 @@ public class PlayerService extends Service implements
 	@Override
 	public void onDestroy() {
 		doPlaybackStop();
-		
+
 		stopForeground(true);
-		
+
 		Context ctx = getApplicationContext();
-		SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME,
-				MODE_PRIVATE);
+		SharedPreferences settings = PreferenceManager
+				.getDefaultSharedPreferences(ctx);
 		SharedPreferences.Editor editor = settings.edit();
 		if (mSong != null) {
 			editor.putString("song_id", mSong.id);
@@ -166,10 +226,10 @@ public class PlayerService extends Service implements
 		mPlaylist.save(ctx);
 		int pos = mPlaylist.getCurrentPosition();
 		editor.putInt("playlist_pos", pos);
-		
+
 		// Save pref
 		editor.commit();
-		
+
 		Log.d(TAG, "Service Destroyed");
 	}
 
@@ -272,6 +332,15 @@ public class PlayerService extends Service implements
 		String uri = song.url.replaceFirst(".ogg$", ".mp3").replaceFirst(
 				".flac$", ".mp3").replaceFirst(".m4a$", ".mp3").replaceAll(
 				"sid=[^&]+", "sid=" + Lullaby.comm.authToken);
+
+		Context ctx = getApplicationContext();
+		SharedPreferences settings = PreferenceManager
+				.getDefaultSharedPreferences(ctx);
+		if (settings.getString("server_url_preference", "").startsWith(
+				"https://")) {
+			uri = uri.replaceFirst("^http:", "https:");
+		}
+
 		Log.v(TAG, "Playing uri: " + uri);
 
 		if (mState == STATE.Prepared || mState == STATE.Started

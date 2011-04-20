@@ -57,7 +57,7 @@ public class MainActivity extends ActivityGroup implements
 	
 	static final String TAG = "LullabyMainActivity";	
 	
-	private static String PREFS_NAME = "LullabyPrefs";
+	//private static String PREFS_NAME = "LullabyPrefs";
 
 	// private static final int SWIPE_MAX_OFF_PATH = 250; // initial value
 	private static final int SWIPE_MAX_OFF_PATH = 300;

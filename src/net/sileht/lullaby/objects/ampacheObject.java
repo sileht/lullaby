@@ -22,8 +22,9 @@ package net.sileht.lullaby.objects;
  */
 
 import java.io.Externalizable;
-import android.os.Parcelable; 
+
 import android.os.Parcel;
+import android.os.Parcelable;
 
 public abstract class ampacheObject implements Parcelable, Externalizable {
 	

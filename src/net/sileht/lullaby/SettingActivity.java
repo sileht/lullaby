@@ -18,7 +18,7 @@ package net.sileht.lullaby;
 * | Boston, MA  02111-1307, USA.                                           |
 * +------------------------------------------------------------------------+
 */
-import net.sileht.lullaby.R;
+
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.util.Log;
@@ -31,6 +31,8 @@ public class SettingActivity extends PreferenceActivity {
 
 		// Load the preferences from an XML resource
 		addPreferencesFromResource(R.xml.preferences);
+
+
 	}
 
 	protected void onStop() {
@@ -39,4 +41,5 @@ public class SettingActivity extends PreferenceActivity {
 		/* we want to tell other activities that we need to reload */
 		super.onStop();
 	}
+
 }

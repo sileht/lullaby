@@ -21,9 +21,7 @@ package net.sileht.lullaby;
  */
 import java.util.ArrayList;
 
-import net.sileht.lullaby.R;
 import net.sileht.lullaby.objects.Song;
-
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;

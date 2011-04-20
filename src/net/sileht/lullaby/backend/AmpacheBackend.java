@@ -21,32 +21,43 @@ package net.sileht.lullaby.backend;
  * +------------------------------------------------------------------------+
  */
 
-import java.net.*;
-import java.io.*;
-
-import org.xml.sax.*;
-import org.xml.sax.helpers.*;
-
+import java.io.CharArrayWriter;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import net.sileht.lullaby.Lullaby;
-import net.sileht.lullaby.objects.*;
+import net.sileht.lullaby.objects.Album;
+import net.sileht.lullaby.objects.Artist;
+import net.sileht.lullaby.objects.Playlist;
+import net.sileht.lullaby.objects.Song;
+import net.sileht.lullaby.objects.Tag;
+import net.sileht.lullaby.objects.ampacheObject;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.helpers.XMLReaderFactory;
+
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.SSLCertificateSocketFactory;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
-
-import java.lang.Integer;
-import java.lang.Long;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Date;
 
 public class AmpacheBackend extends HandlerThread {
 
@@ -288,6 +299,7 @@ public class AmpacheBackend extends HandlerThread {
 					hasSettingsIncorrect = true;
 					return null;
 				} catch (IOException e) {
+					e.printStackTrace();
 					authToken = "";
 					return null;
 				}
@@ -307,6 +319,14 @@ public class AmpacheBackend extends HandlerThread {
 			private Boolean makeAuthentification() {
 				//Log.d(TAG, "Ampache handshake request.");
 
+				if (prefs.getBoolean("InsecureSSL", true)){
+					HttpsURLConnection.setDefaultSSLSocketFactory(SSLCertificateSocketFactory.getInsecure(-1,null));
+					HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+				} else {
+					HttpsURLConnection.setDefaultSSLSocketFactory(SSLCertificateSocketFactory.getDefault(-1,null));
+					HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+				}
+				
 				authToken = "";
 				String url = getUrlFor("handshake", "", 0);
 				AmpacheHandler hand = makeRequest(url, "handshake");

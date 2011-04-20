@@ -20,10 +20,8 @@ package net.sileht.lullaby;
  * +------------------------------------------------------------------------+
  */
 
-import net.sileht.lullaby.R;
 import net.sileht.lullaby.objects.Song;
 import net.sileht.lullaby.player.PlayerService;
-
 import android.app.ListActivity;
 import android.content.ComponentName;
 import android.content.Context;

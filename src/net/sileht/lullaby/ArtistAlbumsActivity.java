@@ -19,7 +19,6 @@ package net.sileht.lullaby;
  * | Boston, MA  02111-1307, USA.                                           |
  * +------------------------------------------------------------------------+
  */
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 

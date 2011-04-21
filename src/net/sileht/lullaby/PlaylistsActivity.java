@@ -72,8 +72,8 @@ public class PlaylistsActivity extends Activity implements
 		}
 		setup();
 
-		mViewUtils.doBindService();
 		prefs.registerOnSharedPreferenceChangeListener(this);
+		mViewUtils.doBindService();
 	}
 
 	@Override
@@ -136,8 +136,8 @@ public class PlaylistsActivity extends Activity implements
 
 	@Override
 	protected void onDestroy() {
-		mViewUtils.doUnbindService();
 		super.onDestroy();
+		mViewUtils.doUnbindService();
 	}
 
 	static class PlaylistsAdapter extends SimpleCursorAdapter implements

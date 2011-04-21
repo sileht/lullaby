@@ -21,6 +21,11 @@
     <string name="search_label">Search</string>
     <string name="search_hint">Music search</string>
     
+    <string name="title_checkssl_preference">Trust All SSL Certificate</string>
+    <string name="summary_checkssl_preference">Remove all SSL Certificate verification</string>
+
+    
+    
 <string name="summary_infos_preferences">Lullaby need READ permissions to STREAM ACCES and API/RPC</string>
 <string name="title_infos_preferences">ACL Informations</string>
 <string name="slash">/</string>

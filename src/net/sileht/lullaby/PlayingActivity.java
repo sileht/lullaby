@@ -190,6 +190,9 @@ public class PlayingActivity extends Activity implements
 
 		updateInformation();
 
+		startService(new Intent(PlayingActivity.this, PlayerService.class));
+		bindService(new Intent(PlayingActivity.this, PlayerService.class),
+				mPlayerConnection, 0);
 	}
 
 	private void setRepeatButtonImage() {
@@ -224,22 +227,14 @@ public class PlayingActivity extends Activity implements
 			playpause.setImageResource(R.drawable.ic_media_play);
 		}
 	}
-
-	@Override
-	protected void onStart() {
-		super.onStart();
-		startService(new Intent(PlayingActivity.this, PlayerService.class));
-		bindService(new Intent(PlayingActivity.this, PlayerService.class),
-				mPlayerConnection, 0);
-	}
-
+	
 	@Override
 	protected void onDestroy() {
+		super.onDestroy();
 		try {
 			unbindService(mPlayerConnection);
 		} catch (Exception e) {
 		}
-		super.onDestroy();
 	}
 
 	private void updateInformation() {

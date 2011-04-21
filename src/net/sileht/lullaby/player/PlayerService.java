@@ -21,12 +21,7 @@ package net.sileht.lullaby.player;
  * | Boston, MA  02111-1307, USA.                                           |
  * +------------------------------------------------------------------------+
  */
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.File;
 import java.util.ArrayList;
 
 import net.sileht.lullaby.AmpacheRequest;
@@ -60,6 +55,7 @@ public class PlayerService extends Service implements
 	private Song mSong;
 	private MediaPlayer mPlayer;
 	private int mBuffering = -1;
+	private StreamCacher mStreamCacher;
 
 	private boolean mPlayAfterPrepared = false;
 
@@ -74,6 +70,7 @@ public class PlayerService extends Service implements
 	private ArrayList<OnStatusListener> mPlayerListeners;
 
 	private Handler mTickHandler = new Handler();
+
 	private Runnable mTickTask = new Runnable() {
 		@Override
 		public void run() {
@@ -96,61 +93,6 @@ public class PlayerService extends Service implements
 		public void onTick(int position, int duration, int buffer);
 	}
 
-	private class LullabyPlayer extends MediaPlayer {
-
-
-		FileOutputStream mFos;
-		InputStream mIs;
-		
-		public void setDataSource(String uri) throws IllegalStateException,
-				IOException, IllegalArgumentException {
-			String temp = getCacheDir() + "stream.dat";
-			
-
-
-			try {
-
-				HttpURLConnection connection = (HttpURLConnection) (new URL(uri))
-						.openConnection();
-
-				connection.setDoOutput(true);
-				connection.setChunkedStreamingMode(0);
-				connection.setInstanceFollowRedirects(true);
-
-				connection.connect();
-
-				mIs = connection.getInputStream();
-				mFos = new FileOutputStream(temp);
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-			(new Thread(new Runnable(){
-				public void run() {
-					try {
-						byte[] b = new byte[1024];
-						while (mIs.read(b) > 0) {
-							mFos.write(b);
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-					try {
-						mIs.close();
-						mFos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			})).start();
-			super.setDataSource(temp);
-
-		}
-
-	}
-
 	@Override
 	public void onCreate() {
 
@@ -159,13 +101,16 @@ public class PlayerService extends Service implements
 				.getSystemService(Context.TELEPHONY_SERVICE);
 		tmgr.listen(mPhoneStateListener, 0);
 
+		mStreamCacher = new StreamCacher(ctx);
+		mStreamCacher.start();
+		
 		mPlaylist = new PlayingPlaylist(this);
 
 		mPhoneStateListener = new MyPhoneStateListener();
 
 		mPlayerListeners = new ArrayList<OnStatusListener>();
 
-		mPlayer = new LullabyPlayer();
+		mPlayer = new MediaPlayer();
 		mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		mPlayer.setOnErrorListener(this);
 		mPlayer.setOnPreparedListener(this);
@@ -186,9 +131,8 @@ public class PlayerService extends Service implements
 		if (id != null && !id.equals("")) {
 			AmpacheRequest request = new AmpacheRequest(null, new String[] {
 					"song", id }, true, false) {
-				@SuppressWarnings("unchecked")
 				@Override
-				public void add_objects(ArrayList list) {
+				public void add_objects(@SuppressWarnings("rawtypes") ArrayList list) {
 					if (!list.isEmpty() && mSong == null) {
 						setSong((Song) list.get(0));
 					}
@@ -210,6 +154,8 @@ public class PlayerService extends Service implements
 
 	@Override
 	public void onDestroy() {
+		mStreamCacher.stop();
+		
 		doPlaybackStop();
 
 		stopForeground(true);
@@ -341,16 +287,26 @@ public class PlayerService extends Service implements
 			uri = uri.replaceFirst("^http:", "https:");
 		}
 
-		Log.v(TAG, "Playing uri: " + uri);
 
 		if (mState == STATE.Prepared || mState == STATE.Started
 				|| mState == STATE.Paused) {
 			mPlayer.stop();
 		}
 
+		String oid = uri.replaceFirst(".*oid=([^&]+).*", "$1");
+		File cacheFile = new File(getExternalCacheDir(), "stream-"+oid+".mp3");
+		if (cacheFile.exists()){
+			Log.v(TAG, "Playing uri: " + uri +" (cached: "+cacheFile.toString()+")");
+			uri = cacheFile.toString();
+			onBufferingUpdate(mPlayer, 100);
+		} else {
+			Log.v(TAG, "Playing uri: " + uri);
+			uri = "http://127.0.0.1:"+mStreamCacher.getPort()+"/"+uri;
+			onBufferingUpdate(mPlayer, -1);
+		}
+		
 		mSong = song;
 
-		onBufferingUpdate(mPlayer, -1);
 
 		for (OnStatusListener obj : mPlayerListeners) {
 			obj.onStatusChange();
@@ -364,6 +320,8 @@ public class PlayerService extends Service implements
 			return;
 		}
 	}
+
+	
 
 	protected void playSong(Song song) {
 		Lullaby.comm.ping();

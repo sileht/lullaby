@@ -81,6 +81,7 @@ public class ArtistAlbumsActivity extends Activity implements
 			clear();
 		}
 		setup();
+
 		mViewUtils.doBindService();
 		prefs.registerOnSharedPreferenceChangeListener(this);
 
@@ -146,8 +147,8 @@ public class ArtistAlbumsActivity extends Activity implements
 
 	@Override
 	protected void onDestroy() {
-		mViewUtils.doUnbindService();
 		super.onDestroy();
+		mViewUtils.doUnbindService();
 	}
 
 	private class AlbumClickListener implements

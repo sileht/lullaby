@@ -132,11 +132,12 @@ public class AlbumActivity extends Activity implements
 		ListView lv = (ListView) findViewById(R.id.list);
 		lv.setAdapter(mAdapter);
 	}
+	
 
 	@Override
 	protected void onDestroy() {
-		mViewUtils.doUnbindService();
 		super.onDestroy();
+		mViewUtils.doUnbindService();
 	}
 
 	static class AlbumsAdapter extends SimpleCursorAdapter implements

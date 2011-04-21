@@ -20,7 +20,9 @@ package net.sileht.lullaby;
 */
 
 import android.os.Bundle;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.Preference.OnPreferenceChangeListener;
 import android.util.Log;
 
 public class SettingActivity extends PreferenceActivity {
@@ -28,11 +30,18 @@ public class SettingActivity extends PreferenceActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
 		// Load the preferences from an XML resource
 		addPreferencesFromResource(R.xml.preferences);
-
-
+		
+		findPreference("InsecureSSL").setOnPreferenceChangeListener(
+				new OnPreferenceChangeListener() {
+					@Override
+					public boolean onPreferenceChange(Preference preference,
+							Object newValue) {
+						Utils.setSSLCheck(getApplicationContext());
+						return true;
+					}
+				});
 	}
 
 	protected void onStop() {

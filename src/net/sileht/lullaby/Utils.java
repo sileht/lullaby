@@ -23,13 +23,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.Formatter;
 import java.util.Locale;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import android.content.Context;
+import android.net.SSLCertificateSocketFactory;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 
 public class Utils {
 
@@ -84,6 +91,16 @@ public class Utils {
 		}
 		return stringForTime(time);
 	}
+	
+	public static void setSSLCheck(Context ctx){
+		if (PreferenceManager.getDefaultSharedPreferences(ctx).getBoolean("InsecureSSL", true)){
+			HttpsURLConnection.setDefaultSSLSocketFactory(SSLCertificateSocketFactory.getInsecure(-1,null));
+			HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+		} else {
+			HttpsURLConnection.setDefaultSSLSocketFactory(SSLCertificateSocketFactory.getDefault(-1,null));
+			HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+		}
+	}
 
 	public static String stringForTime(int timeMs) {
 		int totalSeconds = timeMs / 1000;
@@ -125,5 +142,19 @@ public class Utils {
 		} catch (Exception e) {
 			return null;
 		}
+	}
+	
+	public static void copy(File src, File dst) throws IOException {
+	    InputStream in = new FileInputStream(src);
+	    OutputStream out = new FileOutputStream(dst);
+
+	    // Transfer bytes from in to out
+	    byte[] buf = new byte[1024];
+	    int len;
+	    while ((len = in.read(buf)) > 0) {
+	        out.write(buf, 0, len);
+	    }
+	    in.close();
+	    out.close();
 	}
 }

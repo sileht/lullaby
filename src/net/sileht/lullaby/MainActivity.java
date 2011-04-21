@@ -22,12 +22,17 @@ package net.sileht.lullaby;
 
 import java.io.File;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import net.sileht.lullaby.backend.ArtworkAsyncHelper;
 import net.sileht.lullaby.objects.Song;
 import net.sileht.lullaby.player.PlayerService;
 import android.app.ActivityGroup;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -35,6 +40,7 @@ import android.content.res.Resources;
 import android.gesture.GestureOverlayView;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.SSLCertificateSocketFactory;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -54,10 +60,10 @@ import android.widget.Toast;
 
 public class MainActivity extends ActivityGroup implements
 		PlayerService.OnStatusListener {
-	
-	static final String TAG = "LullabyMainActivity";	
-	
-	//private static String PREFS_NAME = "LullabyPrefs";
+
+	static final String TAG = "LullabyMainActivity";
+
+	// private static String PREFS_NAME = "LullabyPrefs";
 
 	// private static final int SWIPE_MAX_OFF_PATH = 250; // initial value
 	private static final int SWIPE_MAX_OFF_PATH = 300;
@@ -70,7 +76,6 @@ public class MainActivity extends ActivityGroup implements
 	private GestureDetector gestureDetector;
 	private View.OnTouchListener gestureListener;
 
-	
 	private TextView line1;
 	private TextView line2;
 	private ImageButton playpause;
@@ -80,7 +85,7 @@ public class MainActivity extends ActivityGroup implements
 
 	// private static final String TAG = "LullabyMainActivity";
 
-	// Bind Service Player 
+	// Bind Service Player
 	private boolean mIsBound;
 	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
@@ -88,8 +93,7 @@ public class MainActivity extends ActivityGroup implements
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mPlayer = ((PlayerService.PlayerBinder) service).getService();
-			mPlayer
-					.setOnPlayerListener((PlayerService.OnStatusListener) MainActivity.this);
+			mPlayer.setOnPlayerListener((PlayerService.OnStatusListener) MainActivity.this);
 
 		}
 
@@ -104,8 +108,10 @@ public class MainActivity extends ActivityGroup implements
 		super.onCreate(savedInstanceState);
 
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		
+
 		setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
+
+		Utils.setSSLCheck(this);
 		
 		if (mArtworkWidth < 0) {
 			Bitmap icon = ((BitmapDrawable) this.getResources().getDrawable(
@@ -132,24 +138,35 @@ public class MainActivity extends ActivityGroup implements
 		Intent intent; // Reusable Intent for each tab
 
 		intent = new Intent().setClass(this, PlayingPlaylistActivity.class);
-		spec = mTabHost.newTabSpec("playback").setIndicator("Playing",
-				res.getDrawable(R.drawable.ic_tab_playback)).setContent(intent);
+		spec = mTabHost
+				.newTabSpec("playback")
+				.setIndicator("Playing",
+						res.getDrawable(R.drawable.ic_tab_playback))
+				.setContent(intent);
 		mTabHost.addTab(spec);
 
 		//  Artist
 		intent = new Intent().setClass(this, ArtistAlbumsActivity.class);
-		spec = mTabHost.newTabSpec("artists").setIndicator("Artists",
-				res.getDrawable(R.drawable.ic_tab_artists)).setContent(intent);
+		spec = mTabHost
+				.newTabSpec("artists")
+				.setIndicator("Artists",
+						res.getDrawable(R.drawable.ic_tab_artists))
+				.setContent(intent);
 		mTabHost.addTab(spec);
 
 		intent = new Intent().setClass(this, AlbumActivity.class);
-		spec = mTabHost.newTabSpec("albums").setIndicator("Albums",
-				res.getDrawable(R.drawable.ic_tab_albums)).setContent(intent);
+		spec = mTabHost
+				.newTabSpec("albums")
+				.setIndicator("Albums",
+						res.getDrawable(R.drawable.ic_tab_albums))
+				.setContent(intent);
 		mTabHost.addTab(spec);
 
 		intent = new Intent().setClass(this, PlaylistsActivity.class);
-		spec = mTabHost.newTabSpec("playlist").setIndicator("Playlists",
-				res.getDrawable(R.drawable.ic_tab_playlists))
+		spec = mTabHost
+				.newTabSpec("playlist")
+				.setIndicator("Playlists",
+						res.getDrawable(R.drawable.ic_tab_playlists))
 				.setContent(intent);
 		mTabHost.addTab(spec);
 
@@ -190,14 +207,12 @@ public class MainActivity extends ActivityGroup implements
 				startActivity(i);
 			}
 		});
-
-		updateBottomBar();
 		doBindService();
+		updateBottomBar();
 	}
 
-
 	void doBindService() {
-		//c.startService(new Intent(c, PlayerService.class));
+		// c.startService(new Intent(c, PlayerService.class));
 		bindService(new Intent(this, PlayerService.class), mPlayerConnection,
 				Context.BIND_AUTO_CREATE);
 		mIsBound = true;
@@ -213,8 +228,8 @@ public class MainActivity extends ActivityGroup implements
 
 	@Override
 	protected void onDestroy() {
-		doUnbindService();
 		super.onDestroy();
+		doUnbindService();
 	}
 
 	@Override
@@ -279,19 +294,20 @@ public class MainActivity extends ActivityGroup implements
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		if (mTabHost.getCurrentTab() == 0){
+		if (mTabHost.getCurrentTab() == 0) {
 			menu.add(0, MENU_CLEAR, 0, "Clear playlist").setIcon(
-				android.R.drawable.ic_menu_close_clear_cancel);
+					android.R.drawable.ic_menu_close_clear_cancel);
 			menu.add(0, MENU_SAVE, 0, "Save playlist").setIcon(
-				android.R.drawable.ic_menu_save);
+					android.R.drawable.ic_menu_save);
 			menu.add(0, MENU_LOAD, 0, "Load playlist").setIcon(
-				android.R.drawable.ic_menu_edit);
-		} else {
-			menu.add(0, MENU_CLEARCACHE, 0, "Refresh").setIcon(
-				android.R.drawable.ic_menu_close_clear_cancel);
+					android.R.drawable.ic_menu_edit);
 		}
 		menu.add(0, MENU_SETTINGS, 0, "Settings").setIcon(
 				android.R.drawable.ic_menu_preferences);
+
+		menu.add(0, MENU_CLEARCACHE, 0, "Refresh/ClearCache").setIcon(
+				android.R.drawable.ic_menu_close_clear_cancel);
+
 		menu.add(0, MENU_EXIT, 0, "Exit").setIcon(
 				android.R.drawable.ic_menu_close_clear_cancel);
 		return true;
@@ -317,21 +333,8 @@ public class MainActivity extends ActivityGroup implements
 				mPlayer.mPlaylist.load(this);
 			break;
 		case MENU_CLEARCACHE:
-			File root = Utils.getCacheRootDir();
-			for (File f : root.listFiles()) {
-				f.delete();
-			}
-			root.delete();
+			showDialog(0);
 
-			SharedPreferences prefs = 
-			    PreferenceManager.getDefaultSharedPreferences(this);
-			SharedPreferences.Editor editor = prefs.edit();
-			editor.putBoolean("clear_artists", true);
-			editor.putBoolean("clear_albums", true);
-			editor.putBoolean("clear_playlist", true);
-			editor.commit();
-			Log.v(TAG,"setPref:clear="+ mTabHost.getCurrentTabTag());
-			
 			return true;
 		case MENU_EXIT:
 			onDestroy();
@@ -346,6 +349,41 @@ public class MainActivity extends ActivityGroup implements
 			return true;
 		}
 		return false;
+	}
+
+	protected Dialog onCreateDialog(int id) {
+
+		final CharSequence[] items = { "Browser View", "All (Browser View + Media)" };
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Cache to clear:");
+		builder.setItems(items, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int item) {
+				clearCache((item == 1));
+			}
+		});
+		return builder.create();
+	}
+
+	private void clearCache(boolean all) {
+
+		File root = Utils.getCacheRootDir();
+		for (File f : root.listFiles()) {
+			if (!all && f.toString().startsWith("stream-")) {
+				continue;
+			}
+			f.delete();
+		}
+
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putBoolean("clear_artists", true);
+		editor.putBoolean("clear_albums", true);
+		editor.putBoolean("clear_playlist", true);
+		editor.commit();
+		Log.v(TAG, "setPref:clear=" + mTabHost.getCurrentTabTag());
+
 	}
 
 	class MyGestureDetector extends SimpleOnGestureListener {

@@ -18,8 +18,10 @@
                 android:key="server_password_preference"
                 android:title="@string/title_password_preference"
                 android:summary="@string/summary_password_preference"
-                android:dialogTitle="@string/dialog_password_preference"
-                android:password="true" />
+                android:dialogTitle="@string/dialog_password_preference" android:password="true"/>
+        <CheckBoxPreference android:key="InsecureSSL"
+                android:title="@string/title_checkssl_preference"
+                android:summary="@string/summary_checkssl_preference"></CheckBoxPreference>
     
 
 

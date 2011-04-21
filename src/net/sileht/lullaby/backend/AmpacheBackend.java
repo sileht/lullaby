@@ -318,14 +318,6 @@ public class AmpacheBackend extends HandlerThread {
 
 			private Boolean makeAuthentification() {
 				//Log.d(TAG, "Ampache handshake request.");
-
-				if (prefs.getBoolean("InsecureSSL", true)){
-					HttpsURLConnection.setDefaultSSLSocketFactory(SSLCertificateSocketFactory.getInsecure(-1,null));
-					HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-				} else {
-					HttpsURLConnection.setDefaultSSLSocketFactory(SSLCertificateSocketFactory.getDefault(-1,null));
-					HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
-				}
 				
 				authToken = "";
 				String url = getUrlFor("handshake", "", 0);

@@ -121,10 +121,10 @@ public class SongsActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
-		mViewUtils.doUnbindService(false);
 		super.onDestroy();
+		mViewUtils.doUnbindService();
 	}
-
+	
 	private SimpleCursorAdapter getNewAdapter() {
 		int r;
 		if (!mStandAloneActivity) {

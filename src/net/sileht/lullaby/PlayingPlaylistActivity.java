@@ -106,12 +106,11 @@ public class PlayingPlaylistActivity extends ListActivity implements
 			mIsBound = false;
 		}
 	}
-	
+
 	@Override
 	protected void onDestroy() {
-		super.onStop();
 		doUnbindService();
-
+		super.onDestroy();
 	}
 
 	@Override

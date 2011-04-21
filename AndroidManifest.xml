@@ -1,40 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="net.sileht.lullaby" android:sharedUserLabel="@string/user_label"
-	android:versionName="1.1" android:versionCode="2">
+	android:versionName="1.2" android:versionCode="3">
 	<application android:icon="@drawable/icon" android:label="@string/app_name"
 		android:name="Lullaby" android:debuggable="false">
 
-		<meta-data android:name="android.app.default_searchable"
-			android:value=".SongsActivity" />
-		<activity android:label="@string/app_name" 
-			android:theme="@android:style/Theme.NoTitleBar"
-			android:name="MainActivity"
+		<activity android:label="@string/app_name" android:theme="@android:style/Theme.NoTitleBar"
+			android:name="MainActivity" android:launchMode="singleInstance">
 			
-			>
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
 				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
+			
 		</activity>
 
 		<activity android:name="ArtistAlbumsActivity"></activity>
+		
 		<activity android:name="AlbumActivity"></activity>
+		
 		<activity android:name="PlayingPlaylistActivity"></activity>
+			
 		<activity android:name="PlaylistsActivity"></activity>
+		
 		<activity android:name="PlayingActivity"
-			android:theme="@android:style/Theme.Wallpaper.NoTitleBar"></activity>
-		<activity android:name="SettingActivity"></activity>
+			android:theme="@android:style/Theme.Wallpaper.NoTitleBar"
+			android:launchMode="singleInstance"></activity>
+			
+		<activity android:name="SettingActivity" android:launchMode="singleInstance"></activity>
+		
 		<activity android:name="SongsActivity" android:label="Search">
+		
 			<intent-filter>
 				<action android:name="android.intent.action.SEARCH" />
 				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
+			
 			<meta-data android:name="android.app.searchable"
 				android:resource="@xml/searchable" />
+				
 		</activity>
+		
 		<service android:name=".player.PlayerService"></service>
+
+		<meta-data android:name="android.app.default_searchable"
+			android:value=".SongsActivity" />
+			
 	</application>
 
 	<uses-permission android:name="android.permission.INTERNET"></uses-permission>

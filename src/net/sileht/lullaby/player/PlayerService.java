@@ -21,7 +21,7 @@ package net.sileht.lullaby.player;
  * | Boston, MA  02111-1307, USA.                                           |
  * +------------------------------------------------------------------------+
  */
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,38 +98,18 @@ public class PlayerService extends Service implements
 
 	private class LullabyPlayer extends MediaPlayer {
 
-
 		FileOutputStream mFos;
 		InputStream mIs;
-		
+
 		public void setDataSource(String uri) throws IllegalStateException,
 				IOException, IllegalArgumentException {
 			String temp = getCacheDir() + "stream.dat";
-			
 
 
-			try {
-
-				HttpURLConnection connection = (HttpURLConnection) (new URL(uri))
-						.openConnection();
-
-				connection.setDoOutput(true);
-				connection.setChunkedStreamingMode(0);
-				connection.setInstanceFollowRedirects(true);
-
-				connection.connect();
-
-				mIs = connection.getInputStream();
-				mFos = new FileOutputStream(temp);
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-			(new Thread(new Runnable(){
+			(new Thread(new Runnable() {
 				public void run() {
 					try {
-						byte[] b = new byte[1024];
+						byte[] b = new byte[16384];
 						while (mIs.read(b) > 0) {
 							mFos.write(b);
 						}
@@ -151,6 +131,50 @@ public class PlayerService extends Service implements
 
 	}
 
+	static private int BUFFER_FLUSH = 160 * 1024;
+	
+	private void downloadStreamCache(String uri) {
+		File cacheFile = new File(getCacheDir(),"stream.dat");
+
+		try {
+
+			HttpURLConnection connection = (HttpURLConnection) (new URL(uri))
+					.openConnection();
+
+			connection.setDoOutput(true);
+			connection.setChunkedStreamingMode(0);
+			connection.setInstanceFollowRedirects(true);
+
+			connection.connect();
+
+			InputStream is = connection.getInputStream();
+			FileOutputStream fos = new FileOutputStream(cacheFile);
+			
+			byte[] b = new byte[16384];
+			int totalBytesRead = 0;
+			int incrementalBytesRead = 0;
+			int nbBytesRead = 1;
+			while (nbBytesRead > 0) {
+				nbBytesRead = is.read(b);
+				fos.write(b);
+				
+				incrementalBytesRead += nbBytesRead;
+				totalBytesRead += nbBytesRead;
+				
+				if (incrementalBytesRead >= BUFFER_FLUSH){
+					incrementalBytesRead = 0;
+					updateMediaPlayer();
+				}
+				
+			}
+			is.close();
+			fos.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	@Override
 	public void onCreate() {
 
@@ -165,12 +189,7 @@ public class PlayerService extends Service implements
 
 		mPlayerListeners = new ArrayList<OnStatusListener>();
 
-		mPlayer = new LullabyPlayer();
-		mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-		mPlayer.setOnErrorListener(this);
-		mPlayer.setOnPreparedListener(this);
-		mPlayer.setOnCompletionListener(this);
-		mPlayer.setOnBufferingUpdateListener(this);
+		mPlayer = prepareNewMediaPlayer();
 
 		setState(STATE.Idle);
 
@@ -198,6 +217,45 @@ public class PlayerService extends Service implements
 		}
 		Log.v(TAG, "Lullaby Player Service Start");
 		mTickHandler.postDelayed(mTickTask, 100);
+
+	}
+
+	private MediaPlayer prepareNewMediaPlayer() {
+		return prepareNewMediaPlayer(false, -1);
+	}
+
+	private MediaPlayer prepareNewMediaPlayer(boolean restorePreviousState, int position) {
+
+		MediaPlayer mp = new MediaPlayer();
+		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		mp.setOnErrorListener(this);
+		mp.setOnPreparedListener(this);
+		mp.setOnCompletionListener(this);
+		mp.setOnBufferingUpdateListener(this);
+
+		if (restorePreviousState) {
+			switch (mState) {
+			case Idle:
+				;
+			case Initialised:
+				;
+			case Preparing:
+				;
+			case Prepared:
+				;
+			case Started:
+				mp.start();
+				;
+			case Paused:
+				mp.pause();
+				;
+			case Stopped:
+				mp.stop();
+				mp.reset();
+				;
+			}
+		}
+		return mp;
 
 	}
 

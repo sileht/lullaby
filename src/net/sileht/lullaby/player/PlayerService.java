@@ -103,7 +103,7 @@ public class PlayerService extends Service implements
 
 		mStreamCacher = new StreamCacher(ctx);
 		mStreamCacher.start();
-		
+
 		mPlaylist = new PlayingPlaylist(this);
 
 		mPhoneStateListener = new MyPhoneStateListener();
@@ -132,7 +132,8 @@ public class PlayerService extends Service implements
 			AmpacheRequest request = new AmpacheRequest(null, new String[] {
 					"song", id }, true, false) {
 				@Override
-				public void add_objects(@SuppressWarnings("rawtypes") ArrayList list) {
+				public void add_objects(
+						@SuppressWarnings("rawtypes") ArrayList list) {
 					if (!list.isEmpty() && mSong == null) {
 						setSong((Song) list.get(0));
 					}
@@ -155,7 +156,7 @@ public class PlayerService extends Service implements
 	@Override
 	public void onDestroy() {
 		mStreamCacher.stop();
-		
+
 		doPlaybackStop();
 
 		stopForeground(true);
@@ -205,7 +206,8 @@ public class PlayerService extends Service implements
 
 					Notification n = new Notification();
 					n.icon = R.drawable.status_icon;
-					n.tickerText = "Playing " + mSong.name;
+					n.tickerText = getString(R.string.playing) + " "
+							+ mSong.name;
 					n.flags |= Notification.FLAG_ONGOING_EVENT;
 					n.contentView = views;
 					Intent i = new Intent(this, PlayingActivity.class);
@@ -275,18 +277,18 @@ public class PlayerService extends Service implements
 
 		setState(STATE.Idle);
 
-		String uri = song.url.replaceFirst(".ogg$", ".mp3").replaceFirst(
-				".flac$", ".mp3").replaceFirst(".m4a$", ".mp3").replaceAll(
-				"sid=[^&]+", "sid=" + Lullaby.comm.authToken);
+		String uri = song.url.replaceFirst(".ogg$", ".mp3")
+				.replaceFirst(".flac$", ".mp3").replaceFirst(".m4a$", ".mp3")
+				.replaceAll("sid=[^&]+", "sid=" + Lullaby.comm.authToken);
 
 		Context ctx = getApplicationContext();
 		SharedPreferences settings = PreferenceManager
 				.getDefaultSharedPreferences(ctx);
+		
 		if (settings.getString("server_url_preference", "").startsWith(
 				"https://")) {
 			uri = uri.replaceFirst("^http:", "https:");
 		}
-
 
 		if (mState == STATE.Prepared || mState == STATE.Started
 				|| mState == STATE.Paused) {
@@ -294,19 +296,21 @@ public class PlayerService extends Service implements
 		}
 
 		String oid = uri.replaceFirst(".*oid=([^&]+).*", "$1");
-		File cacheFile = new File(getExternalCacheDir(), "stream-"+oid+".mp3");
-		if (cacheFile.exists()){
-			Log.v(TAG, "Playing uri: " + uri +" (cached: "+cacheFile.toString()+")");
+		File cacheFile = new File(getExternalCacheDir(), "stream-" + oid
+				+ ".mp3");
+		if (cacheFile.exists()) {
+			Log.v(TAG,
+					"Playing uri: " + uri + " (cached: " + cacheFile.toString()
+							+ ")");
 			uri = cacheFile.toString();
 			onBufferingUpdate(mPlayer, 100);
 		} else {
 			Log.v(TAG, "Playing uri: " + uri);
-			uri = "http://127.0.0.1:"+mStreamCacher.getPort()+"/"+uri;
+			uri = "http://127.0.0.1:" + mStreamCacher.getPort() + "/" + uri;
 			onBufferingUpdate(mPlayer, -1);
 		}
-		
-		mSong = song;
 
+		mSong = song;
 
 		for (OnStatusListener obj : mPlayerListeners) {
 			obj.onStatusChange();
@@ -320,8 +324,6 @@ public class PlayerService extends Service implements
 			return;
 		}
 	}
-
-	
 
 	protected void playSong(Song song) {
 		Lullaby.comm.ping();

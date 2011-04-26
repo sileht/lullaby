@@ -74,7 +74,7 @@ public class Playlist extends ampacheObject {
 		extra = in.readString();
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
 		public Playlist createFromParcel(Parcel in) {
 			return new Playlist(in);

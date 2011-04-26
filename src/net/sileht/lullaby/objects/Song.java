@@ -86,7 +86,7 @@ public class Song extends ampacheObject {
 		extra = in.readString();
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
 		public Song createFromParcel(Parcel in) {
 			return new Song(in);

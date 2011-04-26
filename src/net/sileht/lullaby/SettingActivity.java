@@ -38,7 +38,7 @@ public class SettingActivity extends PreferenceActivity {
 					@Override
 					public boolean onPreferenceChange(Preference preference,
 							Object newValue) {
-						Utils.setSSLCheck(getApplicationContext());
+						Utils.setSSLCheck((Boolean) newValue);
 						return true;
 					}
 				});

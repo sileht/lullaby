@@ -117,7 +117,8 @@ public class PlaylistsActivity extends Activity implements
 					new String[] { "playlists", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override
-				public void add_objects(ArrayList list) {
+				public void add_objects(
+						@SuppressWarnings("rawtypes") ArrayList list) {
 					for (Playlist playlist : (ArrayList<Playlist>) list) {
 						playlistsData.newRow().add(playlist.id)
 								.add(playlist.name).add(playlist.tracks)
@@ -194,7 +195,7 @@ public class PlaylistsActivity extends Activity implements
 			String displayname = name;
 			boolean unknown = name == null;
 			if (unknown) {
-				displayname = "Unknown";
+				displayname = mRessource.getString(R.string.unknown);
 			}
 
 			ViewHolder vh = (ViewHolder) view.getTag();
@@ -204,9 +205,10 @@ public class PlaylistsActivity extends Activity implements
 			builder.delete(0, builder.length());
 
 			if (numsongs == 1) {
-				builder.append("1 song");
+				builder.append("1 " + mRessource.getString(R.string.song));
 			} else {
-				builder.append(numsongs + " songs");
+				builder.append(numsongs + " "
+						+ mRessource.getString(R.string.songs));
 			}
 
 			vh.line2.setText(owner + " - " + builder.toString());

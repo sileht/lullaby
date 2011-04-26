@@ -64,7 +64,7 @@ public class Tag extends ampacheObject {
 		super.readFromParcel(in);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
 		public Tag createFromParcel(Parcel in) {
 			return new Tag(in);

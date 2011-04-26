@@ -15,10 +15,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -65,8 +65,7 @@ public class PlayingActivity extends Activity implements
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mPlayer = ((PlayerService.PlayerBinder) service).getService();
-			mPlayer
-					.setOnPlayerListener((PlayerService.OnStatusListener) PlayingActivity.this);
+			mPlayer.setOnPlayerListener((PlayerService.OnStatusListener) PlayingActivity.this);
 			setToggleButtonImage();
 			setRepeatButtonImage();
 			setPlayPauseButtonImage();
@@ -227,7 +226,7 @@ public class PlayingActivity extends Activity implements
 			playpause.setImageResource(R.drawable.ic_media_play);
 		}
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -250,7 +249,7 @@ public class PlayingActivity extends Activity implements
 				return;
 			}
 		}
-		mTrackName.setText("No Playing.");
+		mTrackName.setText(getResources().getString(R.string.stopped));
 		mArtistName.setText("");
 		mAlbumName.setText("");
 		artwork.setImageResource(R.drawable.albumart_mp_unknown);
@@ -309,9 +308,10 @@ public class PlayingActivity extends Activity implements
 				int duration = mPlayer.getDuration();
 				int seek = (int) (progress * duration / 1000L);
 				int preloaded = mPlayer.getBuffer() * duration;
-				Log.d(TAG, "seek: " + Utils.stringForTime(seek) + " buf "
-						+ mPlayer.getBuffer() + " preload: "
-						+ Utils.stringForTime(preloaded));
+				Log.d(TAG,
+						"seek: " + Utils.stringForTime(seek) + " buf "
+								+ mPlayer.getBuffer() + " preload: "
+								+ Utils.stringForTime(preloaded));
 				if (seek <= preloaded) {
 					Log.d(TAG, "Seeking to " + Utils.stringForTime(seek));
 					mPlayer.doSeekTo(seek);
@@ -330,13 +330,16 @@ public class PlayingActivity extends Activity implements
 				// right to left swipe
 				if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE
 						&& Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-					Toast.makeText(PlayingActivity.this,
-							"Playing previous song", Toast.LENGTH_SHORT).show();
+					Toast.makeText(
+							PlayingActivity.this,
+							getResources().getString(R.string.playing_previous),
+							Toast.LENGTH_SHORT).show();
 					mPlayer.mPlaylist.playPrevious();
 					return true;
 				} else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE
 						&& Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-					Toast.makeText(PlayingActivity.this, "Playing next song",
+					Toast.makeText(PlayingActivity.this,
+							getResources().getString(R.string.playing_next),
 							Toast.LENGTH_SHORT).show();
 					mPlayer.mPlaylist.playNext();
 					return true;

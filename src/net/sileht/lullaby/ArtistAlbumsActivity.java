@@ -128,9 +128,10 @@ public class ArtistAlbumsActivity extends Activity implements
 			mAdapter = getNewAdapter();
 
 			mRequest = new AmpacheRequest(this, new String[] { "artists", "" }) {
+				
 				@SuppressWarnings("unchecked")
 				@Override
-				public void add_objects(ArrayList list) {
+				public void add_objects( @SuppressWarnings("rawtypes") ArrayList list) {
 					for (Artist artist : (ArrayList<Artist>) list) {
 						artistsData.newRow().add(artist.id).add(artist.name)
 								.add(artist.albums).add(artist.tracks);
@@ -275,7 +276,7 @@ public class ArtistAlbumsActivity extends Activity implements
 						new String[] { "artist_albums", id }) {
 					@SuppressWarnings("unchecked")
 					@Override
-					public void add_objects(ArrayList list) {
+					public void add_objects(@SuppressWarnings("rawtypes") ArrayList list) {
 						for (Album album : (ArrayList<Album>) list) {
 							MatrixCursor cur = ((ArtistAlbumsActivity) this.mContext).albumsData
 									.get(this.mDirective[1]);
@@ -338,7 +339,7 @@ public class ArtistAlbumsActivity extends Activity implements
 			String displayartist = artist;
 			boolean unknown = artist == null;
 			if (unknown) {
-				displayartist = "Unknown";
+				displayartist = mRessource.getString(R.string.unknown);
 			}
 			vh.line1.setText(displayartist);
 
@@ -346,9 +347,8 @@ public class ArtistAlbumsActivity extends Activity implements
 					.getColumnIndexOrThrow(ViewUtils.ARTIST_ALBUMS));
 			int numsongs = cursor.getInt(cursor
 					.getColumnIndexOrThrow(ViewUtils.ARTIST_TRACKS));
-
-			String songs_albums = "" + numalbums + " albums and " + numsongs
-					+ " songs";
+			
+			String songs_albums = String.format(mRessource.getString(R.string.albums_and_songs), numalbums, numsongs);
 
 			vh.line2.setText(songs_albums);
 

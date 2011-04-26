@@ -220,9 +220,17 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			if (mPlayer != null) {
 				mPlayer.mPlaylist.appendSongs(mContext, new String[] {
 						"artist_songs", artistId });
-				Toast.makeText(mContext,
-						"Enqueue " + artist + ": " + tracks + " songs",
-						Toast.LENGTH_LONG).show();
+				Toast.makeText(
+						mContext,
+						mContext.getResources().getString(R.string.enqueue)
+								+ " "
+								+ artist
+								+ ": "
+								+ tracks
+								+ " "
+								+ mContext.getResources().getString(
+										R.string.songs), Toast.LENGTH_LONG)
+						.show();
 			} else {
 				Log.w(TAG, "Player not started!?");
 			}
@@ -239,9 +247,17 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			if (mPlayer != null) {
 				mPlayer.mPlaylist.appendSongs(mContext, new String[] {
 						"album_songs", albumId });
-				Toast.makeText(mContext,
-						"Enqueue " + album + ": " + tracks + " songs",
-						Toast.LENGTH_LONG).show();
+				Toast.makeText(
+						mContext,
+						mContext.getResources().getString(R.string.enqueue)
+								+ " "
+								+ album
+								+ ": "
+								+ tracks
+								+ " "
+								+ mContext.getResources().getString(
+										R.string.songs), Toast.LENGTH_LONG)
+						.show();
 			} else {
 				Log.w(TAG, "Player not started!?");
 			}
@@ -258,7 +274,10 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			if (mPlayer != null) {
 				mPlayer.mPlaylist.appendSongs(mContext, new String[] { "song",
 						songId });
-				Toast.makeText(mContext, "Enqueue " + song + " - " + artist,
+				Toast.makeText(
+						mContext,
+						mContext.getResources().getString(R.string.enqueue)
+								+ " " + song + " - " + artist,
 						Toast.LENGTH_LONG).show();
 			} else {
 				Log.w(TAG, "Player not started!?");
@@ -276,9 +295,17 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 			if (mPlayer != null) {
 				mPlayer.mPlaylist.appendSongs(mContext, new String[] {
 						"playlist_songs", playlistId });
-				Toast.makeText(mContext,
-						"Enqueue " + playlistName + ": " + tracks + " songs",
-						Toast.LENGTH_LONG).show();
+				Toast.makeText(
+						mContext,
+						mContext.getResources().getString(R.string.enqueue)
+								+ " "
+								+ playlistName
+								+ ": "
+								+ tracks
+								+ " "
+								+ mContext.getResources().getString(
+										R.string.songs), Toast.LENGTH_LONG)
+						.show();
 			} else {
 				Log.w(TAG, "Player not started!?");
 			}
@@ -294,12 +321,15 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuinfo) {
-		menu.add(0, MENU_PLAY, 0, "Play").setIcon(
+		menu.add(0, MENU_PLAY, 0,
+				mContext.getResources().getString(R.string.play)).setIcon(
 				android.R.drawable.ic_media_play);
-		menu.add(0, MENU_ENQUEUE, 0, "Enqueue").setIcon(
+		menu.add(0, MENU_ENQUEUE, 0,
+				mContext.getResources().getString(R.string.enqueue)).setIcon(
 				android.R.drawable.ic_menu_add);
-		menu.add(0, MENU_ENQUEUE_PLAY, 0, "Enqueue and Play").setIcon(
-				android.R.drawable.ic_menu_add);
+		menu.add(0, MENU_ENQUEUE_PLAY, 0,
+				mContext.getResources().getString(R.string.enqueue_play))
+				.setIcon(android.R.drawable.ic_menu_add);
 
 	}
 }

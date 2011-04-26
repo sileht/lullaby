@@ -69,7 +69,7 @@ public class Artist extends ampacheObject {
         tracks = in.readInt();
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
 	public static final Parcelable.Creator CREATOR
         = new Parcelable.Creator() {
                 public Artist createFromParcel(Parcel in) {

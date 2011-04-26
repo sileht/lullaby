@@ -272,7 +272,7 @@ public abstract class AmpacheRequest extends Handler {
 			hideProgress();
 			if (mContext != null) {
 				Toast.makeText(mContext,
-						"Ampache not configured.\nCheck your settings.",
+						mContext.getResources().getString(R.string.AmpacheRequest_check_settings),
 						Toast.LENGTH_LONG).show();
 			}
 			Message requestMsg = new Message();

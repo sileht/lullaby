@@ -36,7 +36,6 @@ import javax.net.ssl.HttpsURLConnection;
 import android.content.Context;
 import android.net.SSLCertificateSocketFactory;
 import android.os.Environment;
-import android.preference.PreferenceManager;
 
 public class Utils {
 
@@ -44,8 +43,8 @@ public class Utils {
 	public static boolean mExternalStorageWriteable = false;
 
 	private static StringBuilder mFormatBuilder = new StringBuilder();
-	private static Formatter mFormatter = new Formatter(mFormatBuilder, Locale
-			.getDefault());
+	private static Formatter mFormatter = new Formatter(mFormatBuilder,
+			Locale.getDefault());
 
 	public static File getCacheRootDir() {
 		File f = new File(Environment.getExternalStorageDirectory(),
@@ -91,14 +90,20 @@ public class Utils {
 		}
 		return stringForTime(time);
 	}
-	
-	public static void setSSLCheck(Context ctx){
-		if (PreferenceManager.getDefaultSharedPreferences(ctx).getBoolean("InsecureSSL", true)){
-			HttpsURLConnection.setDefaultSSLSocketFactory(SSLCertificateSocketFactory.getInsecure(-1,null));
-			HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+
+	public static void setSSLCheck(Boolean insecure) {
+		if (insecure) {
+			HttpsURLConnection
+					.setDefaultSSLSocketFactory(SSLCertificateSocketFactory
+							.getInsecure(-1, null));
+			HttpsURLConnection
+					.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
 		} else {
-			HttpsURLConnection.setDefaultSSLSocketFactory(SSLCertificateSocketFactory.getDefault(-1,null));
-			HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+			HttpsURLConnection
+					.setDefaultSSLSocketFactory(SSLCertificateSocketFactory
+							.getDefault(-1, null));
+			HttpsURLConnection
+					.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
 		}
 	}
 
@@ -143,18 +148,18 @@ public class Utils {
 			return null;
 		}
 	}
-	
-	public static void copy(File src, File dst) throws IOException {
-	    InputStream in = new FileInputStream(src);
-	    OutputStream out = new FileOutputStream(dst);
 
-	    // Transfer bytes from in to out
-	    byte[] buf = new byte[1024];
-	    int len;
-	    while ((len = in.read(buf)) > 0) {
-	        out.write(buf, 0, len);
-	    }
-	    in.close();
-	    out.close();
+	public static void copy(File src, File dst) throws IOException {
+		InputStream in = new FileInputStream(src);
+		OutputStream out = new FileOutputStream(dst);
+
+		// Transfer bytes from in to out
+		byte[] buf = new byte[1024];
+		int len;
+		while ((len = in.read(buf)) > 0) {
+			out.write(buf, 0, len);
+		}
+		in.close();
+		out.close();
 	}
 }

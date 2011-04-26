@@ -266,7 +266,7 @@ public class PlayingPlaylist {
 		AmpacheRequest request = new AmpacheRequest(context, directive, true) {
 			@SuppressWarnings("unchecked")
 			@Override
-			public void add_objects(ArrayList list) {
+			public void add_objects(@SuppressWarnings("rawtypes") ArrayList list) {
 				appendSongs(list);
 			}
 		};
@@ -368,7 +368,7 @@ public class PlayingPlaylist {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public boolean load(Context ctx) {
 
 		try {
@@ -385,9 +385,8 @@ public class PlayingPlaylist {
 					pin.close();
 					return true;
 				} else {
-					Log
-							.v(TAG,
-									"Loaded object doesn't seems to be a valid playlist.");
+					Log.v(TAG,
+							"Loaded object doesn't seems to be a valid playlist.");
 				}
 			} else {
 				Log.v(TAG,

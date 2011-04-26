@@ -1,32 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    
-    <string name="app_description">Lullaby Ampache Client</string>
-    <string name="user_label">ABAAKOUK Mehdi</string>
-    <string name="app_name">Lullaby</string>
-        <string name="fast_scroll_alphabet">\u0020ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
-    <string name="fast_scroll_numeric_alphabet">\u00200123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
-    <string name="prefs_name">DroidZik Preferences</string>
-    <string name="server_preferences">Ampache Server Configuration</string>
-    <string name="title_server_preference">Ampache Server URL</string>
-    <string name="summary_server_preference">URL for your ampache server (ie: http://example.com/ampache )</string>
-    <string name="dialog_server_preference">URL</string>
-    <string name="title_username_preference">Username</string>
-    <string name="summary_username_preference">Ampache user login</string>
-    <string name="dialog_username_preference">username</string>
-    <string name="title_password_preference">Password</string>
-    <string name="summary_password_preference">Ampache user password</string>
-    <string name="dialog_password_preference">password</string>
-    <string name="play_name">Now Playing</string>
-    <string name="search_label">Search</string>
-    <string name="search_hint">Music search</string>
-    
-    <string name="title_checkssl_preference">Trust All SSL Certificate</string>
-    <string name="summary_checkssl_preference">Remove all SSL Certificate verification</string>
 
-    
-    
-<string name="summary_infos_preferences">Lullaby need READ permissions to STREAM ACCES and API/RPC</string>
-<string name="title_infos_preferences">ACL Informations</string>
-<string name="slash">/</string>
+	<string name="app_description">Lullaby Ampache Client</string>
+	<string name="user_label">ABAAKOUK Mehdi</string>
+	<string name="app_name">Lullaby</string>
+	<string name="fast_scroll_alphabet">\u0020ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+	<string name="fast_scroll_numeric_alphabet">\u00200123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+	<string name="prefs_name">Lullaby Preferences</string>
+	<string name="server_preferences">Ampache Server Configuration</string>
+	<string name="title_server_preference">Ampache Server URL</string>
+	<string name="summary_server_preference">URL for your ampache server (ie:
+		http://example.com/ampache )</string>
+	<string name="dialog_server_preference">URL</string>
+	<string name="title_username_preference">Username</string>
+	<string name="summary_username_preference">Ampache user login</string>
+	<string name="dialog_username_preference">Username</string>
+	<string name="title_password_preference">Password</string>
+	<string name="summary_password_preference">Ampache user password</string>
+	<string name="dialog_password_preference">Password</string>
+
+	<string name="play_name">Now Playing</string>
+	<string name="search_label">Search</string>
+	<string name="search_hint">Music search</string>
+	<string name="stopped">Stopped</string>
+
+	<string name="title_checkssl_preference">Trust All SSL Certificate</string>
+	<string name="summary_checkssl_preference">Remove all SSL Certificate verification</string>
+
+
+
+	<string name="summary_infos_preferences">Lullaby need READ permission to STREAM ACCES and
+		API/RPC</string>
+	<string name="title_infos_preferences">ACL Information</string>
+	<string name="slash">/</string>
+
+
+	<string name="AmpacheRequest_check_settings">Ampache not configured.\nCheck your settings.
+	</string>
+	<string name="Menu_clear_playlist">Clear playlist</string>
+	<string name="Menu_save_playlist">Save playlist</string>
+	<string name="Menu_load_playlist">Load playlist</string>
+	<string name="Menu_settings">Settings</string>
+	<string name="Menu_refresh">Refresh/ClearCache</string>
+	<string name="Menu_exit">Exit</string>
+	<string name="Menu_dialog_refresh_view">Browser View</string>
+	<string name="Menu_dialog_refresh_all">All (Browser View + Media)</string>
+	<string name="Menu_dialog_refresh_title">Cache to clear:</string>
+	
+	<string name="play">Play</string>
+	<string name="delete">Delete</string>
+	<string name="enqueue">Enqueue</string>
+	<string name="enqueue_play">Enqueue and Play</string>
+
+	<string name="playing">Playing</string>
+	<string name="playing_next">Playing previous song</string>
+	<string name="playing_previous">Playing next song</string>
+
+	<string name="unknown">Unknown</string>
+	<string name="song">song</string>
+	<string name="songs">songs</string>
+	<string name="albums_and_songs" formatted="false">%d albums and %d songs</string>
 </resources>

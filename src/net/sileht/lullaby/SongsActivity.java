@@ -100,7 +100,7 @@ public class SongsActivity extends Activity {
 			request = new AmpacheRequest((Activity) this, directive) {
 				@SuppressWarnings("unchecked")
 				@Override
-				public void add_objects(ArrayList list) {
+				public void add_objects(@SuppressWarnings("rawtypes") ArrayList list) {
 					for (Song song : (ArrayList<Song>) list) {
 						// SONG_ID,SONG_NAME, SONG_SONG, SONG_ARTIST, SONG_URL,
 						// SONG_DURATION, SONG_EXTRA
@@ -206,7 +206,7 @@ public class SongsActivity extends Activity {
 			String displayname = name;
 			boolean unknown = name == null;
 			if (unknown) {
-				displayname = "Unknown";
+				displayname = mRessource.getString(R.string.unknown);
 			}
 
 			ViewHolder vh = (ViewHolder) view.getTag();

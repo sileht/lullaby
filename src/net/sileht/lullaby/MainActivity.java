@@ -22,8 +22,6 @@ package net.sileht.lullaby;
 
 import java.io.File;
 
-import javax.net.ssl.HttpsURLConnection;
-
 import net.sileht.lullaby.backend.ArtworkAsyncHelper;
 import net.sileht.lullaby.objects.Song;
 import net.sileht.lullaby.player.PlayerService;
@@ -40,18 +38,17 @@ import android.content.res.Resources;
 import android.gesture.GestureOverlayView;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.net.SSLCertificateSocketFactory;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TabHost;
@@ -111,8 +108,8 @@ public class MainActivity extends ActivityGroup implements
 
 		setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
 
-		Utils.setSSLCheck(this);
-		
+		Utils.setSSLCheck(PreferenceManager.getDefaultSharedPreferences(this).getBoolean("InsecureSSL", false));
+
 		if (mArtworkWidth < 0) {
 			Bitmap icon = ((BitmapDrawable) this.getResources().getDrawable(
 					R.drawable.albumart_mp_unknown_list)).getBitmap();
@@ -293,22 +290,27 @@ public class MainActivity extends ActivityGroup implements
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
+		Resources r = getResources();
 		super.onCreateOptionsMenu(menu);
 		if (mTabHost.getCurrentTab() == 0) {
-			menu.add(0, MENU_CLEAR, 0, "Clear playlist").setIcon(
+			menu.add(0, MENU_CLEAR, 0,
+					r.getString(R.string.Menu_clear_playlist)).setIcon(
 					android.R.drawable.ic_menu_close_clear_cancel);
-			menu.add(0, MENU_SAVE, 0, "Save playlist").setIcon(
-					android.R.drawable.ic_menu_save);
-			menu.add(0, MENU_LOAD, 0, "Load playlist").setIcon(
-					android.R.drawable.ic_menu_edit);
+			/*
+			 * menu.add(0, MENU_SAVE, 0,
+			 * r.getString(R.string.Menu_save_playlist)).setIcon(
+			 * android.R.drawable.ic_menu_save); menu.add(0, MENU_LOAD, 0,
+			 * r.getString(R.string.Menu_load_playlist)).setIcon(
+			 * android.R.drawable.ic_menu_edit);
+			 */
 		}
-		menu.add(0, MENU_SETTINGS, 0, "Settings").setIcon(
-				android.R.drawable.ic_menu_preferences);
+		menu.add(0, MENU_SETTINGS, 0, r.getString(R.string.Menu_settings))
+				.setIcon(android.R.drawable.ic_menu_preferences);
 
-		menu.add(0, MENU_CLEARCACHE, 0, "Refresh/ClearCache").setIcon(
-				android.R.drawable.ic_menu_close_clear_cancel);
+		menu.add(0, MENU_CLEARCACHE, 0, r.getString(R.string.Menu_refresh))
+				.setIcon(android.R.drawable.ic_menu_close_clear_cancel);
 
-		menu.add(0, MENU_EXIT, 0, "Exit").setIcon(
+		menu.add(0, MENU_EXIT, 0, r.getString(R.string.Menu_exit)).setIcon(
 				android.R.drawable.ic_menu_close_clear_cancel);
 		return true;
 	}
@@ -352,11 +354,13 @@ public class MainActivity extends ActivityGroup implements
 	}
 
 	protected Dialog onCreateDialog(int id) {
-
-		final CharSequence[] items = { "Browser View", "All (Browser View + Media)" };
+		Resources r = getResources();
+		final CharSequence[] items = {
+				r.getString(R.string.Menu_dialog_refresh_view),
+				r.getString(R.string.Menu_dialog_refresh_all) };
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle("Cache to clear:");
+		builder.setTitle(r.getString(R.string.Menu_dialog_refresh_title));
 		builder.setItems(items, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int item) {
 				clearCache((item == 1));
@@ -396,13 +400,17 @@ public class MainActivity extends ActivityGroup implements
 				// right to left swipe
 				if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE
 						&& Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-					Toast.makeText(MainActivity.this, "Playing previous song",
+					Toast.makeText(
+							MainActivity.this,
+							getResources().getString(R.string.playing_previous),
 							Toast.LENGTH_SHORT).show();
 					mPlayer.mPlaylist.playPrevious();
 					return true;
 				} else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE
 						&& Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-					Toast.makeText(MainActivity.this, "Playing next song",
+					Toast.makeText(
+							MainActivity.this,
+							getResources().getString(R.string.playing_previous),
 							Toast.LENGTH_SHORT).show();
 					mPlayer.mPlaylist.playNext();
 					return true;

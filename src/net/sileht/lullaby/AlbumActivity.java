@@ -117,7 +117,8 @@ public class AlbumActivity extends Activity implements
 			mRequest = new AmpacheRequest(this, new String[] { "albums", "" }) {
 				@SuppressWarnings("unchecked")
 				@Override
-				public void add_objects(ArrayList list) {
+				public void add_objects(
+						@SuppressWarnings("rawtypes") ArrayList list) {
 					for (Album album : (ArrayList<Album>) list) {
 						albumsData.newRow().add(album.id).add(album.name)
 								.add(album.artist).add(album.tracks)
@@ -132,7 +133,6 @@ public class AlbumActivity extends Activity implements
 		ListView lv = (ListView) findViewById(R.id.list);
 		lv.setAdapter(mAdapter);
 	}
-	
 
 	@Override
 	protected void onDestroy() {
@@ -235,7 +235,7 @@ public class AlbumActivity extends Activity implements
 			String displayname = name;
 			boolean unknown = name == null;
 			if (unknown) {
-				displayname = "Unknown";
+				displayname = mRessource.getString(R.string.unknown);
 			}
 			vh.line1.setText(displayname);
 
@@ -243,9 +243,10 @@ public class AlbumActivity extends Activity implements
 			builder.delete(0, builder.length());
 
 			if (numsongs == 1) {
-				builder.append("1 song");
+				builder.append("1 " + mRessource.getString(R.string.song));
 			} else {
-				builder.append(numsongs + " songs");
+				builder.append(numsongs + " "
+						+ mRessource.getString(R.string.songs));
 			}
 
 			vh.line2.setText(artist + " - " + builder.toString());

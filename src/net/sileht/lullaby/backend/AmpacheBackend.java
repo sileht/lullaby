@@ -32,8 +32,6 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.net.ssl.HttpsURLConnection;
-
 import net.sileht.lullaby.Lullaby;
 import net.sileht.lullaby.objects.Album;
 import net.sileht.lullaby.objects.Artist;
@@ -51,7 +49,6 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.SSLCertificateSocketFactory;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;

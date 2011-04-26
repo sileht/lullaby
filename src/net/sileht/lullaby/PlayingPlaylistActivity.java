@@ -210,9 +210,9 @@ public class PlayingPlaylistActivity extends ListActivity implements
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuinfo) {
-		menu.add(0, MENU_PLAY_SELECTION, 0, "Play").setIcon(
+		menu.add(0, MENU_PLAY_SELECTION, 0, getResources().getString(R.string.play)).setIcon(
 				android.R.drawable.ic_media_play);
-		menu.add(0, MENU_DELETE_ITEM, 0, "Delete").setIcon(
+		menu.add(0, MENU_DELETE_ITEM, 0,  getResources().getString(R.string.delete)).setIcon(
 				android.R.drawable.ic_menu_delete);
 	}
 

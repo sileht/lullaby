@@ -66,11 +66,17 @@ public class StreamCacher implements Runnable {
 	public void run() {
 		while (!mStopServer) {
 			try {
-				Socket client = mSocket.accept();
+				final Socket client = mSocket.accept();
 				if (client == null) {
 					continue;
 				}
-				processCachingAndStreaming(client);
+				Runnable r = new Runnable (){
+					@Override
+					public void run() {
+						processCachingAndStreaming(client);						
+					}
+				};
+				new Thread(r).start();
 			} catch (SocketTimeoutException e) {
 				// Do nothing
 			} catch (IOException e) {
@@ -83,14 +89,12 @@ public class StreamCacher implements Runnable {
 
 		InputStream ris = null;
 		InputStream cis = null;
+		File cacheFile = null;
 		BufferedOutputStream fos = null;
 		String firstLine;
 		String uri;
 
-		File cacheFile = new File(mContext.getExternalCacheDir(), "stream.mp3");
-		if (cacheFile.exists()) {
-			cacheFile.delete();
-		}
+		Boolean streamComplete = false;
 
 		try {
 			cis = client.getInputStream();
@@ -108,6 +112,13 @@ public class StreamCacher implements Runnable {
 			@SuppressWarnings("unused")
 			String method = st.nextToken();
 			uri = st.nextToken().substring(1);
+
+			String oid = uri.replaceFirst(".*oid=([^&]+).*", "$1");
+			cacheFile = new File(mContext.getExternalCacheDir(), "stream-"
+					+ oid + ".mp3");
+			if (cacheFile.exists()) {
+				cacheFile.delete();
+			}
 
 			HttpURLConnection connection = (HttpURLConnection) (new URL(uri))
 					.openConnection();
@@ -141,37 +152,52 @@ public class StreamCacher implements Runnable {
 			byte[] b = new byte[50 * 1024];
 			int nbBytesReadIncremental = 1;
 			int nbBytesRead;
-			while ((nbBytesRead = ris.read(b)) != -1) {
-				if (mStopServer) {
-					return;
-				}
+
+			while ((nbBytesRead = ris.read(b)) != -1 && !mStopServer) {
 
 				if (nbBytesReadIncremental % (10 * 50 * 1024) == 0) {
 					Log.i(TAG, "Progress: " + nbBytesReadIncremental + "/"
 							+ nbBytesTotal);
 				}
 
-				// Write to cache and to client
-				fos.write(b, 0, nbBytesRead);
-				nbBytesReadIncremental += nbBytesRead;
+				// Write to cache
+				if (fos != null) {
+					try {
+						fos.write(b, 0, nbBytesRead);
+					} catch (IOException e) {
+						try {
+							fos.close();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						fos = null;
+					}
+				}
+
+				// Write to client
 				client.getOutputStream().write(b, 0, nbBytesRead);
+
+				nbBytesReadIncremental += nbBytesRead;
 			}
+
+			// Cleanly close cachefile
+			fos.close();
+			streamComplete = (fos != null && !mStopServer);
+			fos = null;
+
 		} catch (IOException e) {
 			e.printStackTrace();
-			return;
 		} finally {
 			if (ris != null) {
 				try {
 					ris.close();
 				} catch (IOException e) {
-					e.printStackTrace();
 				}
 			}
 			if (cis != null) {
 				try {
 					cis.close();
 				} catch (IOException e) {
-					e.printStackTrace();
 				}
 			}
 			if (fos != null) {
@@ -188,13 +214,9 @@ public class StreamCacher implements Runnable {
 			}
 		}
 
-		String oid = uri.replaceFirst(".*oid=([^&]+).*", "$1");
-		File newCacheFile = new File(mContext.getExternalCacheDir(), "stream-"
-				+ oid + ".mp3");
-		if (newCacheFile.exists()) {
-			newCacheFile.delete();
+		if (!streamComplete && cacheFile != null && cacheFile.exists()) {
+			cacheFile.delete();
 		}
-		cacheFile.renameTo(newCacheFile);
-		Log.i(TAG, "Finalize Cachefile: " + newCacheFile);
+
 	}
 }

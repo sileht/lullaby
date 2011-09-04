@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<string name="app_description">Lullaby Ampache Client</string>
+	<string name="user_label">ABAAKOUK Mehdi</string>
+	<string name="app_name">Lullaby</string>
+	<string name="fast_scroll_alphabet">\u0020ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+	<string name="fast_scroll_numeric_alphabet">\u00200123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+	<string name="prefs_name">Lullaby Einstellungen</string>
+	<string name="server_preferences">Ampache Server Einstellungen</string>
+	<string name="title_server_preference">Ampache Server URL</string>
+	<string name="summary_server_preference">URL deines Ampache Servers (z.B.:
+		http://beispiel.de/ampache )</string>
+	<string name="dialog_server_preference">URL</string>
+	<string name="title_username_preference">Benutzername</string>
+	<string name="summary_username_preference">Ampache Nutzer-Login</string>
+	<string name="dialog_username_preference">Benutzername</string>
+	<string name="title_password_preference">Passwort</string>
+	<string name="summary_password_preference">Ampache Nutzer-Passwort</string>
+	<string name="dialog_password_preference">Passwort</string>
+
+	<string name="play_name">Spielt gerade</string>
+	<string name="search_label">Suchen</string>
+	<string name="search_hint">Musiksuche</string>
+	<string name="stopped">Angehalten</string>
+
+	<string name="title_checkssl_preference">Vertraue allen SSL Zertifikaten</string>
+	<string name="summary_checkssl_preference">Entferne alle SSL Zertifikats-Nachweise</string>
+
+
+
+	<string name="summary_infos_preferences">Lullaby benötigt READ Zugriff auf STREAM ACCESS und
+		API/RPC</string>
+	<string name="title_infos_preferences">ACL Information</string>
+	<string name="slash">/</string>
+
+
+	<string name="AmpacheRequest_check_settings">Ampache nicht richtig konfiguriert.\nKontrolliere deine Einstellungen.
+	</string>
+	<string name="Menu_clear_playlist">Playlist löschen</string>
+	<string name="Menu_save_playlist">Playlist speichern</string>
+	<string name="Menu_load_playlist">Playlist laden</string>
+	<string name="Menu_settings">Einstellungen</string>
+	<string name="Menu_refresh">Cache löschen/aktualisieren</string>
+	<string name="Menu_exit">Beenden</string>
+	<string name="Menu_dialog_refresh_view">Browser Ansicht</string>
+	<string name="Menu_dialog_refresh_all">Alle (Browser Ansicht + Medien)</string>
+	<string name="Menu_dialog_refresh_title">Cache leeren:</string>
+	
+	<string name="play">Abspielen</string>
+	<string name="delete">Löschen</string>
+	<string name="enqueue">In Playlist</string>
+	<string name="enqueue_play">In Playlist und Abspielen</string>
+
+	<string name="playing">Spielt</string>
+	<string name="playing_next">Vorherigen Song abspielen</string>
+	<string name="playing_previous">Nächsten Song abspielen</string>
+	<string name="no_playing">Angehalten</string>
+	<string name="artists">Interpreten</string>
+	<string name="albums">Alben</string>
+	<string name="playlists">Playlisten</string>
+
+	<string name="unknown">Unbekannt</string>
+	<string name="song">Song</string>
+	<string name="songs">Songs</string>
+	<string name="albums_and_songs" formatted="false">%d Alben und %d Songs</string>
+
+	<string name="connected_to_ampache">Mit Ampache verbunden.</string>
+	<string name="ampache_connection_lost">Ampache Verbindung unterbrochen.</string>
+	<string name="connection_failed_check_settings">Ampache Verbindung fehlgeschlagen.\nEinstellungen überprüfen.</string>
+	<string name="not_configured_check_settings">Ampache nicht konfiguriert.\nEinstellungen überprüfen.</string>
+	
+</resources>

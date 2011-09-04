@@ -33,6 +33,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import net.sileht.lullaby.Lullaby;
+import net.sileht.lullaby.R;
 import net.sileht.lullaby.objects.Album;
 import net.sileht.lullaby.objects.Artist;
 import net.sileht.lullaby.objects.Playlist;
@@ -102,25 +103,25 @@ public class AmpacheBackend extends HandlerThread {
 
 		if (!isConnectedToAmpache && isConnectedToAmpacheTest) {
 			isConnectionToAmpacheFailed = false;
-			Toast.makeText(mContext, "Connected to Ampache.", Toast.LENGTH_LONG)
-					.show();
+			Toast.makeText(mContext, mContext.getResources().getString(R.string.connected_to_ampache),
+				Toast.LENGTH_LONG).show();
 		}
 		if (isConnectedToAmpache && !isConnectedToAmpacheTest) {
-			Toast.makeText(mContext, "Ampache connection lost.", Toast.LENGTH_LONG)
-					.show();
+			Toast.makeText(mContext, mContext.getResources().getString(R.string.ampache_connection_lost),
+				Toast.LENGTH_LONG).show();
 			isConnectionToAmpacheFailed = true;
 		}
 		if (Lullaby.comm.hasAlreadyTryHandshake && !isConnectionToAmpacheFailed
 				&& !isConnectedToAmpache && !isConnectedToAmpacheTest) {
 			Toast.makeText(mContext,
-					"Ampache connection failed.\nCheck your settings.",
+					mContext.getResources().getString(R.string.connection_failed_check_settings),
 					Toast.LENGTH_LONG).show();
 			isConnectionToAmpacheFailed = true;
 		}
 
 		if (!hasAlreadyCheckConfigured && !Lullaby.comm.isConfigured()) {
 			Toast.makeText(mContext,
-					"Ampache not configured.\nCheck your settings.",
+					mContext.getResources().getString(R.string.not_configured_check_settings),
 					Toast.LENGTH_LONG).show();
 			hasAlreadyCheckConfigured = true;
 		}

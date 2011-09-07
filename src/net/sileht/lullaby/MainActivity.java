@@ -137,7 +137,7 @@ public class MainActivity extends ActivityGroup implements
 		intent = new Intent().setClass(this, PlayingPlaylistActivity.class);
 		spec = mTabHost
 				.newTabSpec("playback")
-				.setIndicator("Playing",
+				.setIndicator(getResources().getString(R.string.playing),
 						res.getDrawable(R.drawable.ic_tab_playback))
 				.setContent(intent);
 		mTabHost.addTab(spec);
@@ -146,7 +146,7 @@ public class MainActivity extends ActivityGroup implements
 		intent = new Intent().setClass(this, ArtistAlbumsActivity.class);
 		spec = mTabHost
 				.newTabSpec("artists")
-				.setIndicator("Artists",
+				.setIndicator(getResources().getString(R.string.artists),
 						res.getDrawable(R.drawable.ic_tab_artists))
 				.setContent(intent);
 		mTabHost.addTab(spec);
@@ -154,7 +154,7 @@ public class MainActivity extends ActivityGroup implements
 		intent = new Intent().setClass(this, AlbumActivity.class);
 		spec = mTabHost
 				.newTabSpec("albums")
-				.setIndicator("Albums",
+				.setIndicator(getResources().getString(R.string.albums),
 						res.getDrawable(R.drawable.ic_tab_albums))
 				.setContent(intent);
 		mTabHost.addTab(spec);
@@ -162,7 +162,7 @@ public class MainActivity extends ActivityGroup implements
 		intent = new Intent().setClass(this, PlaylistsActivity.class);
 		spec = mTabHost
 				.newTabSpec("playlist")
-				.setIndicator("Playlists",
+				.setIndicator(getResources().getString(R.string.playlists),
 						res.getDrawable(R.drawable.ic_tab_playlists))
 				.setContent(intent);
 		mTabHost.addTab(spec);
@@ -275,7 +275,8 @@ public class MainActivity extends ActivityGroup implements
 				return;
 			}
 		}
-		line1.setText("No Playing.");
+		
+		line1.setText(getResources().getString(R.string.no_playing));
 		line2.setText("");
 		artwork.setImageResource(R.drawable.albumart_mp_unknown_list);
 

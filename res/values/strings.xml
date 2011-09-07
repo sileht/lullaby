@@ -29,7 +29,7 @@
 
 
 
-	<string name="summary_infos_preferences">Lullaby need READ permission to STREAM ACCES and
+	<string name="summary_infos_preferences">Lullaby need READ permission to STREAM ACCESS and
 		API/RPC</string>
 	<string name="title_infos_preferences">ACL Information</string>
 	<string name="slash">/</string>
@@ -55,9 +55,18 @@
 	<string name="playing">Playing</string>
 	<string name="playing_next">Playing previous song</string>
 	<string name="playing_previous">Playing next song</string>
+	<string name="no_playing">No Playing.</string>
+	<string name="artists">Artists</string>
+	<string name="albums">Albums</string>
+	<string name="playlists">Playlists</string>
 
 	<string name="unknown">Unknown</string>
 	<string name="song">song</string>
 	<string name="songs">songs</string>
 	<string name="albums_and_songs" formatted="false">%d albums and %d songs</string>
+
+	<string name="connected_to_ampache">Connected to Ampache.</string>
+	<string name="ampache_connection_lost">Ampache connection lost.</string>
+	<string name="connection_failed_check_settings">Ampache connection failed.\nCheck your settings.</string>
+	<string name="not_configured_check_settings">Ampache not configured.\nCheck your settings.</string>
 </resources>

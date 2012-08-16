@@ -85,7 +85,6 @@ public class Playlist extends ampacheObject {
 		}
 	};
 
-	@Override
 	public void readExternal(ObjectInput in) throws IOException,
 			ClassNotFoundException {
         id = (String) in.readObject();
@@ -95,7 +94,6 @@ public class Playlist extends ampacheObject {
         extra = (String) in.readObject();		
 	}
 
-	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(id);
         out.writeObject(name);

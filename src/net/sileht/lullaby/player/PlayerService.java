@@ -72,7 +72,6 @@ public class PlayerService extends Service implements
 	private Handler mTickHandler = new Handler();
 
 	private Runnable mTickTask = new Runnable() {
-		@Override
 		public void run() {
 			for (OnStatusListener obj : mPlayerListeners) {
 				obj.onTick(getCurrentPosition(), getDuration(), getBuffer());
@@ -373,13 +372,11 @@ public class PlayerService extends Service implements
 		}
 	}
 
-	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		Log.e(TAG, "Player error (" + what + "," + extra + ")");
 		return false;
 	}
 
-	@Override
 	public void onPrepared(MediaPlayer mp) {
 		setState(STATE.Prepared);
 		if (mPlayAfterPrepared) {
@@ -391,7 +388,6 @@ public class PlayerService extends Service implements
 		mPlayAfterPrepared = false;
 	}
 
-	@Override
 	public void onCompletion(MediaPlayer mp) {
 		mPlayer.stop();
 		setState(STATE.Stopped);
@@ -404,7 +400,6 @@ public class PlayerService extends Service implements
 		}
 	}
 
-	@Override
 	public void onBufferingUpdate(MediaPlayer mp, int buffer) {
 		mBuffering = buffer;
 		for (OnStatusListener obj : mPlayerListeners) {

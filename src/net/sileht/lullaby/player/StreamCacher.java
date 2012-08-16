@@ -62,7 +62,6 @@ public class StreamCacher implements Runnable {
 		}
 	}
 
-	@Override
 	public void run() {
 		while (!mStopServer) {
 			try {
@@ -71,7 +70,6 @@ public class StreamCacher implements Runnable {
 					continue;
 				}
 				Runnable r = new Runnable (){
-					@Override
 					public void run() {
 						processCachingAndStreaming(client);						
 					}

@@ -154,7 +154,6 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 		mContext.startActivity(intent);
 	}
 
-	@Override
 	public void onItemClick(AdapterView<?> l, View v, int position, long id) {
 
 		Cursor cursor = (Cursor) l.getItemAtPosition(position);
@@ -204,7 +203,6 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 		}
 	}
 
-	@Override
 	public boolean onItemLongClick(AdapterView<?> l, View v, int position,
 			long id) {
 		Cursor cursor = (Cursor) l.getItemAtPosition(position);
@@ -318,7 +316,6 @@ public class ViewUtils implements OnItemLongClickListener, OnItemClickListener,
 	private final static int MENU_ENQUEUE = 1;
 	private final static int MENU_ENQUEUE_PLAY = 2;
 
-	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuinfo) {
 		menu.add(0, MENU_PLAY, 0,

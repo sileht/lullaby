@@ -35,7 +35,6 @@ public class SettingActivity extends PreferenceActivity {
 		
 		findPreference("InsecureSSL").setOnPreferenceChangeListener(
 				new OnPreferenceChangeListener() {
-					@Override
 					public boolean onPreferenceChange(Preference preference,
 							Object newValue) {
 						Utils.setSSLCheck((Boolean) newValue);

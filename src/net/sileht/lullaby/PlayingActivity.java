@@ -62,7 +62,6 @@ public class PlayingActivity extends Activity implements
 	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
-		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mPlayer = ((PlayerService.PlayerBinder) service).getService();
 			mPlayer.setOnPlayerListener((PlayerService.OnStatusListener) PlayingActivity.this);
@@ -72,7 +71,6 @@ public class PlayingActivity extends Activity implements
 			updateInformation();
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName className) {
 			mPlayer = null;
 		}
@@ -102,7 +100,6 @@ public class PlayingActivity extends Activity implements
 
 		curplaylist = (ImageButton) findViewById(R.id.curplaylist);
 		curplaylist.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				Intent i = new Intent();
 				i.setClass(v.getContext(), MainActivity.class);
@@ -123,28 +120,24 @@ public class PlayingActivity extends Activity implements
 
 		playpause = (ImageButton) findViewById(R.id.pause);
 		playpause.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				mPlayer.doPlaybackPauseResume();
 			}
 		});
 		next = (ImageButton) findViewById(R.id.next);
 		next.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				mPlayer.mPlaylist.playNext();
 			}
 		});
 		previous = (ImageButton) findViewById(R.id.prev);
 		previous.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				mPlayer.mPlaylist.playPrevious();
 			}
 		});
 		previous = (ImageButton) findViewById(R.id.prev);
 		previous.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				mPlayer.mPlaylist.playPrevious();
 			}
@@ -153,7 +146,6 @@ public class PlayingActivity extends Activity implements
 		repeat = (ImageButton) findViewById(R.id.repeat);
 		repeat.setImageResource(R.drawable.ic_mp_repeat_off_btn);
 		repeat.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				if (mPlayer != null) {
 					mPlayer.mPlaylist.toggleRepeat();
@@ -165,7 +157,6 @@ public class PlayingActivity extends Activity implements
 		shuffle = (ImageButton) findViewById(R.id.shuffle);
 		shuffle.setImageResource(R.drawable.ic_mp_shuffle_off_btn);
 		shuffle.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				if (mPlayer != null) {
 					mPlayer.mPlaylist.toggleShuffle();
@@ -256,21 +247,17 @@ public class PlayingActivity extends Activity implements
 
 	}
 
-	@Override
 	public void onBuffering(int buffer) {
 	}
 
-	@Override
 	public void onStatusChange() {
 		updateInformation();
 	}
 
-	@Override
 	public void onTogglePlaying(boolean playing) {
 		setPlayPauseButtonImage();
 	}
 
-	@Override
 	public void onTick(int position, int duration, int buffer) {
 		if (isCurrentlySeek) {
 			return;
@@ -291,17 +278,14 @@ public class PlayingActivity extends Activity implements
 
 	private class MySeekBarListener implements SeekBar.OnSeekBarChangeListener {
 
-		@Override
 		public void onStopTrackingTouch(SeekBar seek) {
 			isCurrentlySeek = false;
 		}
 
-		@Override
 		public void onStartTrackingTouch(SeekBar seek) {
 			isCurrentlySeek = true;
 		}
 
-		@Override
 		public void onProgressChanged(SeekBar seekbar, int progress,
 				boolean fromUser) {
 			if (fromUser && mPlayer != null && mPlayer.isSeekable()) {

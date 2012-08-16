@@ -76,7 +76,6 @@ public class PlaylistsActivity extends Activity implements
 		mViewUtils.doBindService();
 	}
 
-	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
 			String key) {
 		Log.v(TAG, "getPref:" + key);
@@ -219,22 +218,18 @@ public class PlaylistsActivity extends Activity implements
 
 		}
 
-		@Override
 		public Object[] getSections() {
 			return mIndexer.getSections();
 		}
 
-		@Override
 		public int getPositionForSection(int sectionIndex) {
 			return mIndexer.getPositionForSection(sectionIndex);
 		}
 
-		@Override
 		public int getSectionForPosition(int position) {
 			return 0;
 		}
 
-		@Override
 		public Cursor runQuery(CharSequence text) {
 			MatrixCursor nc = new MatrixCursor(ViewUtils.mPlaylistsColumnName);
 			mCursor.moveToFirst();

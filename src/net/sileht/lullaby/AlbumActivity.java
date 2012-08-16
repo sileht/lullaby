@@ -81,7 +81,6 @@ public class AlbumActivity extends Activity implements
 
 	}
 
-	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
 			String key) {
 		Log.v(TAG, "getPref:" + key);
@@ -187,7 +186,6 @@ public class AlbumActivity extends Activity implements
 		private final static long ARTWORK_RELOAD_PERIOD = 3000;
 		private Handler mArtworkHandler = new Handler();
 		private Runnable mArtworkTask = new Runnable() {
-			@Override
 			public void run() {
 				notifyDataSetChanged();
 			}
@@ -260,7 +258,6 @@ public class AlbumActivity extends Activity implements
 						art, -1, mArtworkWidth, mArtWorkHeight, true,
 						new ArtworkAsyncHelper.OnImageLoadCompleteListener() {
 
-							@Override
 							public void onImageLoadComplete(int token,
 									ImageView iView, boolean imagePresent) {
 								reloadArtworkIfNeeded();
@@ -269,22 +266,18 @@ public class AlbumActivity extends Activity implements
 			}
 		}
 
-		@Override
 		public Object[] getSections() {
 			return mIndexer.getSections();
 		}
 
-		@Override
 		public int getPositionForSection(int sectionIndex) {
 			return mIndexer.getPositionForSection(sectionIndex);
 		}
 
-		@Override
 		public int getSectionForPosition(int position) {
 			return 0;
 		}
 
-		@Override
 		public Cursor runQuery(CharSequence text) {
 			MatrixCursor nc = new MatrixCursor(ViewUtils.mAlbumsColumnName);
 			mCursor.moveToFirst();

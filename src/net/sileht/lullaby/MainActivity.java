@@ -87,19 +87,18 @@ public class MainActivity extends ActivityGroup implements
 	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
-		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mPlayer = ((PlayerService.PlayerBinder) service).getService();
 			mPlayer.setOnPlayerListener((PlayerService.OnStatusListener) MainActivity.this);
 
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName className) {
 			mPlayer = null;
 		}
 	};
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -177,7 +176,6 @@ public class MainActivity extends ActivityGroup implements
 
 		playpause = (ImageButton) findViewById(R.id.pause);
 		playpause.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				mPlayer.doPlaybackPauseResume();
 			}
@@ -196,7 +194,6 @@ public class MainActivity extends ActivityGroup implements
 		bottombar = (GestureOverlayView) findViewById(R.id.bottombar);
 		bottombar.setOnTouchListener(gestureListener);
 		bottombar.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				Intent i = new Intent();
 				i.setClass(v.getContext(), PlayingActivity.class);
@@ -235,17 +232,14 @@ public class MainActivity extends ActivityGroup implements
 		return true;
 	}
 
-	@Override
 	public void onBuffering(int buffer) {
 		updateBottomBar();
 	}
 
-	@Override
 	public void onStatusChange() {
 		updateBottomBar();
 	}
 
-	@Override
 	public void onTogglePlaying(boolean playing) {
 		if (playing) {
 			playpause.setImageResource(R.drawable.ic_media_pause);
@@ -254,7 +248,6 @@ public class MainActivity extends ActivityGroup implements
 		}
 	}
 
-	@Override
 	public void onTick(int position, int duration, int buffer) {
 	}
 

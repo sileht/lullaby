@@ -156,7 +156,6 @@ public class SongsActivity extends Activity {
 					.getString(R.string.fast_scroll_numeric_alphabet));
 
 			setFilterQueryProvider(new FilterQueryProvider() {
-				@Override
 				public Cursor runQuery(CharSequence text) {
 					MatrixCursor nc = new MatrixCursor(
 							ViewUtils.mSongsColumnName);
@@ -222,17 +221,14 @@ public class SongsActivity extends Activity {
 
 		}
 
-		@Override
 		public Object[] getSections() {
 			return mIndexer.getSections();
 		}
 
-		@Override
 		public int getPositionForSection(int sectionIndex) {
 			return mIndexer.getPositionForSection(sectionIndex);
 		}
 
-		@Override
 		public int getSectionForPosition(int position) {
 			return 0;
 		}

@@ -54,7 +54,6 @@ public class PlayingPlaylistActivity extends ListActivity implements
 	private PlayerService mPlayer;
 	private ServiceConnection mPlayerConnection = new ServiceConnection() {
 
-		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mPlayer = ((PlayerService.PlayerBinder) service).getService();
 			mPlayer.mPlaylist.setAdapter(mAdapter);
@@ -62,7 +61,6 @@ public class PlayingPlaylistActivity extends ListActivity implements
 					.setOnPlayerListener((PlayerService.OnStatusListener) PlayingPlaylistActivity.this);
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName className) {
 			mPlayer = null;
 		}
@@ -113,21 +111,17 @@ public class PlayingPlaylistActivity extends ListActivity implements
 		super.onDestroy();
 	}
 
-	@Override
 	public void onBuffering(int buffer) {
 	}
 
-	@Override
 	public void onTogglePlaying(boolean playing) {
 	}
 
-	@Override
 	public void onStatusChange() {
 		int position = mPlayer.mPlaylist.getCurrentPosition();
 		mView.setSelectionFromTop(position, 0);
 	}
 
-	@Override
 	public void onTick(int position, int duration, int buffer) {
 	}
 
@@ -145,7 +139,6 @@ public class PlayingPlaylistActivity extends ListActivity implements
 
 		}
 
-		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			View v = mInflater.inflate(mResource, parent, false);
 
@@ -175,7 +168,6 @@ public class PlayingPlaylistActivity extends ListActivity implements
 			return v;
 		}
 
-		@Override
 		public int getCount() {
 			if (mContext.mPlayer == null) {
 				return 0;
@@ -184,7 +176,6 @@ public class PlayingPlaylistActivity extends ListActivity implements
 			}
 		}
 
-		@Override
 		public Object getItem(int position) {
 			if (mContext.mPlayer == null) {
 				return null;
@@ -193,7 +184,6 @@ public class PlayingPlaylistActivity extends ListActivity implements
 			}
 		}
 
-		@Override
 		public long getItemId(int position) {
 			return position;
 		}
